@@ -8,7 +8,7 @@ export default function Home() {
       <div className="flex min-h-screen">
         <ZuckkySidebar />
         <SidebarInset>
-          <main className="flex h-screen w-full flex-col">
+          <main className="flex h-screen w-full flex-col items-center justify-center">
             <ChatInterface />
           </main>
         </SidebarInset>
