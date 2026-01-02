@@ -1,12 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Circle, Loader } from 'lucide-react';
+import { CheckCircle2, Circle, Loader, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from '../ui/button';
 
 interface VideoProcessingViewProps {
   videoUrl: string | null;
@@ -16,14 +22,14 @@ interface VideoProcessingViewProps {
 }
 
 const processingSteps = [
-  { category: 'Understanding', step: 'Reviewing screenplay examples' },
-  { category: 'Planning', step: 'Planning your video' },
-  { category: 'Planning', step: 'Choosing the video style' },
-  { category: 'Creating', step: 'Creating the script' },
-  { category: 'Creating', step: 'Writing captions for your video' },
-  { category: 'Creating', step: 'Selecting background music' },
-  { category: 'Creating', step: 'Assigning a narrator' },
-  { category: 'Creating', step: 'Selecting the visuals' },
+  'Reviewing screenplay examples',
+  'Planning your video',
+  'Choosing the video style',
+  'Creating the script',
+  'Writing captions for your video',
+  'Selecting background music',
+  'Assigning a narrator',
+  'Selecting the visuals',
 ];
 const TOTAL_STEPS = processingSteps.length;
 
@@ -31,20 +37,7 @@ const TOTAL_STEPS = processingSteps.length;
 export default function VideoProcessingView({ videoUrl, progress, currentStep, onPreviewClick }: VideoProcessingViewProps) {
     const isComplete = progress >= 100;
     const imageData = PlaceHolderImages.find(img => img.id === 'user-avatar') || PlaceHolderImages[0];
-
-    const getGroupedSteps = () => {
-        const groups: { [key: string]: string[] } = {};
-        processingSteps.forEach(s => {
-            if (!groups[s.category]) {
-                groups[s.category] = [];
-            }
-            groups[s.category].push(s.step);
-        });
-        return groups;
-    };
-
-    const groupedSteps = getGroupedSteps();
-    let stepCounter = 0;
+    const [isOpen, setIsOpen] = useState(true);
 
   return (
     <Card className="w-full max-w-2xl bg-card/50 shadow-inner hover:shadow-md transition-shadow duration-300">
@@ -98,33 +91,36 @@ export default function VideoProcessingView({ videoUrl, progress, currentStep, o
 
 
         {/* Right Section: Steps */}
-        <div className="w-56 shrink-0 space-y-3 text-sm">
-            {Object.entries(groupedSteps).map(([category, steps]) => (
-                <div key={category}>
-                    <p className="mb-1.5 text-xs font-semibold uppercase text-muted-foreground">{category}</p>
-                    <div className="space-y-1.5">
-                        {steps.map(step => {
-                            const stepIndex = stepCounter++;
-                            const isStepDone = stepIndex < currentStep;
-                            const isStepCurrent = stepIndex === currentStep && !isComplete;
-                            return (
-                                <div key={step} className="flex items-center gap-2">
-                                    {isStepDone || isComplete ? (
-                                        <CheckCircle2 className="size-4 shrink-0 text-green-500" />
-                                    ) : isStepCurrent ? (
-                                        <Loader className="size-4 shrink-0 animate-spin text-primary" />
-                                    ) : (
-                                        <Circle className="size-4 shrink-0 text-muted-foreground" />
-                                    )}
-                                    <span className={cn('truncate', (isStepCurrent || isStepDone || isComplete) ? "text-foreground" : "text-muted-foreground")}>
-                                        {step}
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            ))}
+        <div className="w-56 shrink-0 text-sm">
+            <Accordion type="single" collapsible value={isOpen ? "item-1" : ""} onValueChange={(value) => setIsOpen(!!value)}>
+              <AccordionItem value="item-1" className="border-none">
+                <AccordionTrigger className="p-0 hover:no-underline justify-start gap-1 text-xs font-semibold uppercase text-muted-foreground">
+                    <span>{isOpen ? 'Hide' : 'Show'} details</span>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2">
+                  <div className="space-y-1.5">
+                      {processingSteps.map((step, stepIndex) => {
+                          const isStepDone = stepIndex < currentStep;
+                          const isStepCurrent = stepIndex === currentStep && !isComplete;
+                          return (
+                              <div key={step} className="flex items-center gap-2">
+                                  {isStepDone || isComplete ? (
+                                      <CheckCircle2 className="size-4 shrink-0 text-green-500" />
+                                  ) : isStepCurrent ? (
+                                      <Loader className="size-4 shrink-0 animate-spin text-primary" />
+                                  ) : (
+                                      <Circle className="size-4 shrink-0 text-muted-foreground" />
+                                  )}
+                                  <span className={cn('truncate', (isStepCurrent || isStepDone || isComplete) ? "text-foreground" : "text-muted-foreground")}>
+                                      {step}
+                                  </span>
+                              </div>
+                          );
+                      })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
         </div>
       </CardContent>
     </Card>
