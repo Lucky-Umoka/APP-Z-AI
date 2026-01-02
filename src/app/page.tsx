@@ -30,7 +30,7 @@ const Welcome = () => {
 const SuggestionPill = ({ icon, text, onClick }: { icon: React.ReactNode; text: string; onClick: () => void }) => (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left text-sm transition-colors hover:bg-accent/50"
+      className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left text-sm transition-all duration-200 hover:bg-accent/50 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
     >
       <div className="rounded-lg bg-primary/10 p-2 text-primary">{icon}</div>
       <span className="font-medium text-foreground">{text}</span>
@@ -174,7 +174,7 @@ export default function Home() {
             
             {isDragging && (
                 <div
-                className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm"
+                className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in zoom-in-95 duration-300"
                 onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
