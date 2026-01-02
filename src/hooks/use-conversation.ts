@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Message, ConversationStep } from '@/lib/types';
+import { Message, ConversationStep, ProcessingState } from '@/lib/types';
 import { postToMakeWebhook } from '@/lib/actions';
-import { summarizeInstructionsAndConfirm } from '@/ai/flows/summarize-instructions-and-confirm';
 
-// Helper to generate unique IDs
 let messageIdCounter = 0;
 const getUniqueId = () => `msg_${Date.now()}_${messageIdCounter++}`;
 
@@ -15,6 +13,9 @@ const initialWelcomeMessage: Message = {
   content: "Hi, I'm Zuckky AI, here to help you edit your videos to go viral. To get started, please upload your footage by clicking the paperclip icon or dragging a video file into the chat.",
   type: 'text'
 };
+
+const PROCESSING_STEP_DURATION = 1500;
+const TOTAL_PROCESSING_STEPS = 8;
 
 export function useConversation() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -28,9 +29,15 @@ export function useConversation() {
   });
   const [isCanvasOpen, setCanvasOpen] = useState(false);
   const [confirmationTimer, setConfirmationTimer] = useState<NodeJS.Timeout | null>(null);
+  
+  const updateMessage = (id: string, updates: Partial<Message>) => {
+    setMessages(prev => prev.map(msg => msg.id === id ? { ...msg, ...updates } : msg));
+  };
 
   const addMessage = useCallback((message: Omit<Message, 'id'>) => {
-    setMessages(prev => [...prev, { ...message, id: getUniqueId() }]);
+    const newMessage = { ...message, id: getUniqueId() };
+    setMessages(prev => [...prev, newMessage]);
+    return newMessage.id;
   }, []);
 
   const simulateThinking = (duration = 1000) => new Promise(resolve => setTimeout(resolve, duration));
@@ -64,7 +71,6 @@ export function useConversation() {
       case ConversationStep.AWAITING_INSTRUCTIONS:
         setEditingDetails(prev => ({ ...prev, instructions: userInput }));
         setConversationStep(ConversationStep.AWAITING_CONFIRMATION);
-        // This is where we call the AI for summary. For now, we mock it.
         const summary = `I will edit your video using the "${editingDetails.template}" style. Key instructions: "${userInput}". ${editingDetails.customDetails ? `Custom details: "${editingDetails.customDetails}".` : ''} \n\nIs this correct? I'll start automatically in 60 seconds if you don't respond.`;
         addMessage({ role: 'assistant', content: summary, type: 'confirmation' });
         const timer = setTimeout(() => handleConfirmation(true), 60000);
@@ -72,7 +78,6 @@ export function useConversation() {
         break;
 
         case ConversationStep.AWAITING_CONFIRMATION:
-            // User sent a message instead of clicking a button
             if (userInput.toLowerCase().trim() === 'yes') {
                 handleConfirmation(true);
             } else {
@@ -120,14 +125,40 @@ export function useConversation() {
         addMessage({ role: 'user', content: 'Yes, proceed.' });
         await simulateThinking();
         setConversationStep(ConversationStep.PROCESSING);
-        addMessage({ role: 'assistant', content: 'Starting the editing process...', type: 'processing' });
-        // Simulate processing completion
-        setTimeout(() => {
-            setConversationStep(ConversationStep.DONE);
-            addMessage({ role: 'assistant', content: 'Your video is ready! The preview is now available.', type: 'final-video' });
-            setCanvasOpen(true);
-            setIsLoading(false);
-        }, 1500 * 11); // 10 steps * 1.5s + buffer
+        
+        const initialState: ProcessingState = {
+            videoUrl: editingDetails.videoUrl,
+            progress: 0,
+            currentStep: 0,
+        };
+        const processingMessageId = addMessage({ role: 'assistant', content: '', type: 'processing', processingState: initialState });
+
+        const interval = setInterval(() => {
+            setMessages(prevMessages => {
+                const currentMessage = prevMessages.find(msg => msg.id === processingMessageId);
+                if (currentMessage && currentMessage.processingState) {
+                    const nextStep = currentMessage.processingState.currentStep + 1;
+                    if (nextStep > TOTAL_PROCESSING_STEPS) {
+                        clearInterval(interval);
+                        updateMessage(processingMessageId, {
+                            processingState: { ...currentMessage.processingState, progress: 100 }
+                        });
+                        setConversationStep(ConversationStep.DONE);
+                        setCanvasOpen(true);
+                        setIsLoading(false);
+                        return prevMessages;
+                    }
+                    const newProgress = (nextStep / TOTAL_PROCESSING_STEPS) * 100;
+                    const newState: ProcessingState = {
+                        ...currentMessage.processingState,
+                        progress: newProgress,
+                        currentStep: nextStep,
+                    };
+                    updateMessage(processingMessageId, { processingState: newState });
+                }
+                return prevMessages;
+            });
+        }, PROCESSING_STEP_DURATION);
     } else {
         addMessage({ role: 'user', content: newInstructions || 'No, I have changes.' });
         await simulateThinking();
@@ -135,7 +166,7 @@ export function useConversation() {
         setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
         setIsLoading(false);
     }
-  }, [addMessage, confirmationTimer]);
+  }, [addMessage, confirmationTimer, editingDetails.videoUrl]);
 
   return {
     messages,

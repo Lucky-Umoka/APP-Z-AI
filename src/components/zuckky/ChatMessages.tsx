@@ -5,7 +5,7 @@ import { Message } from '@/lib/types';
 import Logo from './Logo';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Card, CardContent } from '../ui/card';
-import ProcessingView from './ProcessingView';
+import VideoProcessingView from './VideoProcessingView';
 import TemplateSelector from './TemplateSelector';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
@@ -16,9 +16,10 @@ interface ChatMessagesProps {
   conversationStep: any; // Using any to avoid breaking changes for now
   onTemplateSelect: (template: string) => void;
   onConfirm: (confirmed: boolean) => void;
+  onPreviewClick: () => void;
 }
 
-export default function ChatMessages({ messages, conversationStep, onTemplateSelect, onConfirm }: ChatMessagesProps) {
+export default function ChatMessages({ messages, conversationStep, onTemplateSelect, onConfirm, onPreviewClick }: ChatMessagesProps) {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-8 px-4 pb-12 pt-12">
       {messages.map((message, index) => (
@@ -36,49 +37,67 @@ export default function ChatMessages({ messages, conversationStep, onTemplateSel
           )}
 
           <div className={cn('flex max-w-[80%] flex-col gap-2', message.role === 'user' ? 'items-end' : 'items-start')}>
-            <Card
-              className={cn(
-                'rounded-2xl transition-all duration-200 hover:shadow-md',
-                message.role === 'user'
-                  ? 'rounded-br-none bg-primary text-primary-foreground'
-                  : 'rounded-bl-none bg-card'
-              )}
-            >
-              <CardContent className="p-4 text-base">{message.content}</CardContent>
-            </Card>
-
-            {/* Render interactive components for the last assistant message */}
-            {message.role === 'assistant' && index === messages.length - 1 && (
+             {/* Render interactive components for the last assistant message */}
+            {message.role === 'assistant' && (
               <>
-                {message.type === 'template-selection' && (
-                  <TemplateSelector onSelect={onTemplateSelect} />
+                {message.type === 'processing' && message.processingState ? (
+                   <VideoProcessingView 
+                    videoUrl={message.processingState.videoUrl}
+                    progress={message.processingState.progress}
+                    currentStep={message.processingState.currentStep}
+                    onPreviewClick={onPreviewClick}
+                   />
+                ) : (
+                    <Card
+                    className={cn(
+                        'rounded-2xl transition-all duration-200 hover:shadow-md',
+                        message.role === 'user'
+                        ? 'rounded-br-none bg-primary text-primary-foreground'
+                        : 'rounded-bl-none bg-card'
+                    )}
+                    >
+                    <CardContent className="p-4 text-base">{message.content}</CardContent>
+                    </Card>
                 )}
-                {message.type === 'processing' && (
-                  <ProcessingView />
-                )}
-                {message.type === 'confirmation' && (
-                  <div className="flex gap-2">
-                    <Button onClick={() => onConfirm(true)} variant="outline" size="sm">
-                      Yes, proceed
-                    </Button>
-                    <Button onClick={() => onConfirm(false)} variant="outline" size="sm">
-                      No, I have changes
-                    </Button>
-                  </div>
-                )}
-                 {message.type === 'final-video' && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Was this helpful?</span>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-accent/50 hover:text-green-500">
-                      <ThumbsUp className="size-4" />
-                    </Button>
-                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-accent/50 hover:text-red-500">
-                      <ThumbsDown className="size-4" />
-                    </Button>
-                  </div>
+
+
+                {index === messages.length - 1 && (
+                    <>
+                        {message.type === 'template-selection' && (
+                        <TemplateSelector onSelect={onTemplateSelect} />
+                        )}
+                        {message.type === 'confirmation' && (
+                        <div className="flex gap-2">
+                            <Button onClick={() => onConfirm(true)} variant="outline" size="sm">
+                            Yes, proceed
+                            </Button>
+                            <Button onClick={() => onConfirm(false)} variant="outline" size="sm">
+                            No, I have changes
+                            </Button>
+                        </div>
+                        )}
+                        {message.type === 'final-video' && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">Was this helpful?</span>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-accent/50 hover:text-green-500">
+                            <ThumbsUp className="size-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-accent/50 hover:text-red-500">
+                            <ThumbsDown className="size-4" />
+                            </Button>
+                        </div>
+                        )}
+                    </>
                 )}
               </>
             )}
+             {message.role === 'user' && (
+                <Card
+                    className='rounded-2xl transition-all duration-200 hover:shadow-md rounded-br-none bg-primary text-primary-foreground'
+                >
+                    <CardContent className="p-4 text-base">{message.content}</CardContent>
+                </Card>
+             )}
           </div>
           {message.role === 'user' && (
             <Avatar className="h-8 w-8">

@@ -142,6 +142,7 @@ export default function Home() {
                         conversationStep={conversationStep}
                         onTemplateSelect={handleTemplateSelection}
                         onConfirm={handleConfirmation}
+                        onPreviewClick={() => setCanvasOpen(true)}
                     />
                    </div>
                 )}
