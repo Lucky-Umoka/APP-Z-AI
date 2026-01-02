@@ -6,9 +6,10 @@ import ChatInput from '@/components/zuckky/ChatInput';
 import ChatMessages from '@/components/zuckky/ChatMessages';
 import { ZuckkySidebar } from '@/components/zuckky/ZuckkySidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { Film, MessageSquare, Zap } from 'lucide-react';
+import { ArrowDown, Film, MessageSquare, Zap } from 'lucide-react';
 import PreviewCanvas from '@/components/zuckky/PreviewCanvas';
-import { DragEvent, useState } from 'react';
+import { DragEvent, useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 
 const SuggestionPill = ({ icon, text, onClick }: { icon: React.ReactNode; text: string; onClick: () => void }) => (
   <button
@@ -49,6 +50,8 @@ export default function Home() {
         handleConfirmation,
       } = useConversation();
     const [isDragging, setIsDragging] = useState(false);
+    const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const [showScrollDown, setShowScrollDown] = useState(false);
 
     const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -79,13 +82,52 @@ export default function Home() {
           sendMessage(`Uploading footage: ${file.name}`, file);
         }
     };
+    
+    const scrollToBottom = () => {
+      if (scrollAreaRef.current) {
+        scrollAreaRef.current.scrollTo({
+          top: scrollAreaRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      }
+    };
+  
+    useEffect(() => {
+      // Scroll to bottom when a new message is added, but only if user is near the bottom.
+      const scrollDiv = scrollAreaRef.current;
+      if (scrollDiv) {
+        const isAtBottom = scrollDiv.scrollHeight - scrollDiv.scrollTop - scrollDiv.clientHeight < 200;
+        if (isAtBottom) {
+          scrollToBottom();
+        }
+      }
+    }, [messages]);
+  
+    useEffect(() => {
+      const scrollDiv = scrollAreaRef.current;
+      const handleScroll = () => {
+        if (scrollDiv) {
+          const isScrolledUp = scrollDiv.scrollTop < scrollDiv.scrollHeight - scrollDiv.clientHeight - 150;
+          setShowScrollDown(isScrolledUp);
+        }
+      };
+  
+      if (scrollDiv) {
+          scrollDiv.addEventListener('scroll', handleScroll);
+      }
+      return () => {
+          if (scrollDiv) {
+              scrollDiv.removeEventListener('scroll', handleScroll);
+          }
+      };
+    }, []);
 
 
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full" onDragEnter={handleDragEnter}>
         <ZuckkySidebar />
-        <main className="flex-1 flex flex-col items-center relative overflow-y-auto">
+        <main ref={scrollAreaRef} className="flex-1 flex flex-col items-center relative overflow-y-auto">
             <div className="w-full max-w-3xl flex-1">
                 {messages.length === 0 ? <Welcome /> : <ChatMessages 
                     messages={messages}
@@ -97,6 +139,18 @@ export default function Home() {
             <div className="sticky bottom-0 w-full max-w-3xl px-4 pb-4 bg-gradient-to-t from-background via-background/80 to-transparent">
                 <ChatInput onSendMessage={sendMessage} isLoading={isLoading}/>
             </div>
+
+            {showScrollDown && (
+                <Button
+                    size="icon"
+                    variant="outline"
+                    className="absolute bottom-24 right-6 z-10 h-10 w-10 rounded-full animate-in fade-in"
+                    onClick={scrollToBottom}
+                >
+                    <ArrowDown className="h-5 w-5" />
+                </Button>
+            )}
+            
             {isDragging && (
                 <div
                 className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm"
