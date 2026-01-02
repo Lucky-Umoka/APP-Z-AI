@@ -72,6 +72,7 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        'zuckky-green': 'var(--zuckky-green)',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -87,21 +88,15 @@ export default {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
-        'breathing-neon': {
-          '0%, 100%': {
-            borderColor: 'hsl(var(--primary) / 0.4)',
-            boxShadow: '0 0 5px hsl(var(--primary) / 0.2)',
-          },
-          '50%': {
-            borderColor: 'hsl(var(--primary) / 1)',
-            boxShadow: '0 0 20px hsl(var(--primary) / 0.5)',
-          },
+        'border-flow': {
+            '0%': { '--angle': '0deg' },
+            '100%': { '--angle': '360deg' },
         },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'breathing-neon': 'breathing-neon 4s ease-in-out infinite',
+        'border-flow': 'border-flow 3s linear infinite',
       },
     },
   },
