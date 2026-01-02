@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2, Circle, Loader } from 'lucide-react';
+import { CheckCircle2, Circle, Loader, PlayCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -12,11 +10,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import type { ProcessingState } from '@/lib/types';
 
-interface VideoProcessingViewProps {
-  videoUrl: string | null;
-  progress: number;
-  currentStep: number;
+interface VideoProcessingViewProps extends ProcessingState {
   onPreviewClick: () => void;
 }
 
@@ -31,19 +27,32 @@ const processingSteps = [
   'Selecting the visuals',
 ];
 
-export default function VideoProcessingView({ videoUrl, progress, currentStep, onPreviewClick }: VideoProcessingViewProps) {
+export default function VideoProcessingView({ 
+    progress, 
+    currentStep,
+    onPreviewClick,
+    isCollapsibleOpen: isCollapsibleOpenProp = true
+}: VideoProcessingViewProps) {
+    const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(isCollapsibleOpenProp);
     const isComplete = progress >= 100;
-    const imageData = PlaceHolderImages.find(img => img.id === 'user-avatar') || PlaceHolderImages[0];
-    const [isOpen, setIsOpen] = useState(true);
+
+    useEffect(() => {
+        setIsCollapsibleOpen(isCollapsibleOpenProp);
+    }, [isCollapsibleOpenProp]);
 
   return (
     <Card className="w-full max-w-2xl bg-card/50 shadow-inner hover:shadow-md transition-shadow duration-300">
-        <Accordion type="single" collapsible value={isOpen ? "item-1" : ""} onValueChange={(value) => setIsOpen(!!value)}>
+        <Accordion 
+            type="single" 
+            collapsible 
+            value={isCollapsibleOpen ? "item-1" : ""} 
+            onValueChange={(value) => setIsCollapsibleOpen(!!value)}
+        >
             <AccordionItem value="item-1" className="border-none">
-                <CardContent className="flex items-center gap-4 p-4">
+                <div className="flex items-center gap-4 p-4">
                     {/* Left Section: Progress */}
                     <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="relative h-16 w-16">
+                        <div className="relative h-12 w-12">
                             <svg className="h-full w-full" viewBox="0 0 36 36">
                                 <path
                                     className="stroke-muted"
@@ -60,46 +69,37 @@ export default function VideoProcessingView({ videoUrl, progress, currentStep, o
                                 />
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
-                                {isComplete ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : `${Math.round(progress)}%`}
+                                {isComplete ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : `${Math.round(progress)}%`}
                             </div>
                         </div>
                     </div>
 
                     {/* Middle Section: Main Text & Trigger */}
                     <div className="flex-1">
-                         <AccordionTrigger className="p-0 hover:no-underline w-full">
-                            <div className='text-left'>
-                                <p className="text-base font-medium">
-                                    {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
-                                </p>
-                                <p className="text-sm text-muted-foreground">Click to {isOpen ? 'hide' : 'show'} details</p>
-                            </div>
+                        <AccordionTrigger className="p-0 hover:no-underline w-full justify-start gap-2 text-left">
+                            <p className="text-base font-medium">
+                                {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
+                            </p>
                         </AccordionTrigger>
+                        <p className="text-sm text-muted-foreground mt-1">Reasoning</p>
                     </div>
 
                     {/* Right Section: Thumbnail */}
                     <button 
                         onClick={onPreviewClick}
-                        className="relative h-28 w-20 shrink-0 cursor-pointer overflow-hidden rounded-md transition-transform duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+                        className={cn(
+                            "relative h-16 w-28 shrink-0 flex items-center justify-center bg-black/80 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
+                            isComplete ? "cursor-pointer hover:scale-[1.02]" : "cursor-default"
+                        )}
                         disabled={!isComplete}
                         aria-label="Open video preview"
                     >
-                    <Image
-                        src={videoUrl || imageData.imageUrl}
-                        alt="Video thumbnail"
-                        layout="fill"
-                        className="object-cover"
-                    />
-                    {isComplete && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                            <CheckCircle2 className="h-8 w-8 text-white" />
-                        </div>
-                    )}
+                        <PlayCircle className={cn("size-8 text-white/50 transition-colors", isComplete && "text-white")}/>
                     </button>
-                </CardContent>
+                </div>
                 
                 <AccordionContent className="px-4 pb-4">
-                  <div className="ml-24 space-y-2 border-l pl-6">
+                  <div className="ml-16 space-y-2 border-l pl-8">
                       {processingSteps.map((step, stepIndex) => {
                           const isStepDone = stepIndex < currentStep;
                           const isStepCurrent = stepIndex === currentStep && !isComplete;

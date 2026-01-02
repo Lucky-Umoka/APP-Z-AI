@@ -2,6 +2,7 @@ export type ProcessingState = {
   videoUrl: string | null;
   progress: number;
   currentStep: number;
+  isCollapsibleOpen?: boolean;
 };
 
 export type Message = {

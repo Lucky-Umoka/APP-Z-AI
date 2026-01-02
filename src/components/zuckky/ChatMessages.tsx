@@ -42,9 +42,7 @@ export default function ChatMessages({ messages, conversationStep, onTemplateSel
               <>
                 {message.type === 'processing' && message.processingState ? (
                    <VideoProcessingView 
-                    videoUrl={message.processingState.videoUrl}
-                    progress={message.processingState.progress}
-                    currentStep={message.processingState.currentStep}
+                    {...message.processingState}
                     onPreviewClick={onPreviewClick}
                    />
                 ) : (

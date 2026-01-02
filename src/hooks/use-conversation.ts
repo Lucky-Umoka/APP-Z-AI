@@ -92,10 +92,14 @@ export function useConversation() {
 
   const sendMessage = useCallback(async (message: string, file?: File) => {
     setIsLoading(true);
-    addMessage({ role: 'user', content: file ? `Uploaded: ${file.name}` : message });
+    if(messages.length === 0 && !file) {
+      // Don't add user message for initial suggestions.
+    } else {
+      addMessage({ role: 'user', content: file ? `Uploaded: ${file.name}` : message });
+    }
     await handleStepLogic(message, file);
     setIsLoading(false);
-  }, [conversationStep, addMessage]);
+  }, [conversationStep, addMessage, messages.length]);
 
   const handleTemplateSelection = useCallback(async (template: string) => {
     setIsLoading(true);
@@ -120,51 +124,62 @@ export function useConversation() {
         setConfirmationTimer(null);
     }
     setIsLoading(true);
-
+  
     if (confirmed) {
-        addMessage({ role: 'user', content: 'Yes, proceed.' });
-        await simulateThinking();
-        setConversationStep(ConversationStep.PROCESSING);
-        
-        const initialState: ProcessingState = {
-            videoUrl: editingDetails.videoUrl,
-            progress: 0,
-            currentStep: 0,
-        };
-        const processingMessageId = addMessage({ role: 'assistant', content: '', type: 'processing', processingState: initialState });
+      addMessage({ role: 'user', content: 'Yes, proceed.' });
+      await simulateThinking();
+      setConversationStep(ConversationStep.PROCESSING);
+      
+      const initialState: ProcessingState = {
+        videoUrl: editingDetails.videoUrl,
+        progress: 0,
+        currentStep: 0,
+      };
+      const processingMessageId = addMessage({ role: 'assistant', content: '', type: 'processing', processingState: initialState });
+  
+      const interval = setInterval(() => {
+        setMessages(prevMessages => {
+          const currentMessage = prevMessages.find(msg => msg.id === processingMessageId);
+          if (currentMessage && currentMessage.processingState) {
+            const nextStep = currentMessage.processingState.currentStep + 1;
+            
+            if (nextStep > TOTAL_PROCESSING_STEPS) {
+              clearInterval(interval);
+              setIsLoading(false);
+              
+              // Final update to 100% and then trigger canvas opening
+              updateMessage(processingMessageId, {
+                processingState: { ...currentMessage.processingState, progress: 100, isCollapsibleOpen: false }
+              });
 
-        const interval = setInterval(() => {
-            setMessages(prevMessages => {
-                const currentMessage = prevMessages.find(msg => msg.id === processingMessageId);
-                if (currentMessage && currentMessage.processingState) {
-                    const nextStep = currentMessage.processingState.currentStep + 1;
-                    if (nextStep > TOTAL_PROCESSING_STEPS) {
-                        clearInterval(interval);
-                        updateMessage(processingMessageId, {
-                            processingState: { ...currentMessage.processingState, progress: 100 }
-                        });
-                        setConversationStep(ConversationStep.DONE);
-                        setCanvasOpen(true);
-                        setIsLoading(false);
-                        return prevMessages;
-                    }
-                    const newProgress = (nextStep / TOTAL_PROCESSING_STEPS) * 100;
-                    const newState: ProcessingState = {
-                        ...currentMessage.processingState,
-                        progress: newProgress,
-                        currentStep: nextStep,
-                    };
-                    updateMessage(processingMessageId, { processingState: newState });
-                }
-                return prevMessages;
-            });
-        }, PROCESSING_STEP_DURATION);
+              // Wait 1.5 seconds after collapsing, then open canvas
+              setTimeout(() => {
+                setCanvasOpen(true);
+              }, 1500);
+
+              setConversationStep(ConversationStep.DONE);
+              return prevMessages;
+            }
+  
+            const newProgress = (nextStep / TOTAL_PROCESSING_STEPS) * 100;
+            const newState: ProcessingState = {
+              ...currentMessage.processingState,
+              progress: newProgress,
+              currentStep: nextStep,
+              isCollapsibleOpen: true, // Keep it open during processing
+            };
+            updateMessage(processingMessageId, { processingState: newState });
+          }
+          return prevMessages;
+        });
+      }, PROCESSING_STEP_DURATION);
+  
     } else {
-        addMessage({ role: 'user', content: newInstructions || 'No, I have changes.' });
-        await simulateThinking();
-        addMessage({ role: 'assistant', content: 'No problem. Please provide your updated instructions.' });
-        setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
-        setIsLoading(false);
+      addMessage({ role: 'user', content: newInstructions || 'No, I have changes.' });
+      await simulateThinking();
+      addMessage({ role: 'assistant', content: 'No problem. Please provide your updated instructions.' });
+      setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
+      setIsLoading(false);
     }
   }, [addMessage, confirmationTimer, editingDetails.videoUrl]);
 
