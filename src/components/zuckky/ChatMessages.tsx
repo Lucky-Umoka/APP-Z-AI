@@ -24,7 +24,8 @@ export default function ChatMessages({ messages, conversationStep, onTemplateSel
       {messages.map((message, index) => (
         <div
           key={message.id}
-          className={cn('flex items-start gap-4', message.role === 'user' ? 'justify-end' : 'justify-start')}
+          className={cn('flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300', message.role === 'user' ? 'justify-end' : 'justify-start')}
+          style={{ animationDelay: `${index * 50}ms` }}
         >
           {message.role === 'assistant' && (
             <Avatar className="h-8 w-8 border border-primary/20">
@@ -37,7 +38,7 @@ export default function ChatMessages({ messages, conversationStep, onTemplateSel
           <div className={cn('flex max-w-[80%] flex-col gap-2', message.role === 'user' ? 'items-end' : 'items-start')}>
             <Card
               className={cn(
-                'rounded-2xl',
+                'rounded-2xl transition-all duration-200 hover:shadow-md',
                 message.role === 'user'
                   ? 'rounded-br-none bg-primary text-primary-foreground'
                   : 'rounded-bl-none bg-card'

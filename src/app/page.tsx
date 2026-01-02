@@ -54,7 +54,6 @@ export default function Home() {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const [showScrollDown, setShowScrollDown] = useState(false);
     const chatContainerRef = useRef<HTMLDivElement>(null);
-    const [isWelcomeVisible, setIsWelcomeVisible] = useState(true);
 
     const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -95,12 +94,6 @@ export default function Home() {
       }
     };
   
-    useEffect(() => {
-        if (messages.length > 0 && isWelcomeVisible) {
-          setIsWelcomeVisible(false);
-        }
-      }, [messages.length, isWelcomeVisible]);
-    
       useEffect(() => {
         const scrollDiv = scrollAreaRef.current;
         const handleScroll = () => {
@@ -149,13 +142,11 @@ export default function Home() {
         <ZuckkySidebar />
         <main ref={scrollAreaRef} className="flex-1 flex flex-col items-center relative overflow-y-auto">
             <div ref={chatContainerRef} className="w-full max-w-3xl flex-1 flex flex-col">
-                {isWelcomeVisible && (
-                  <div className={cn("animate-out slide-out-to-top duration-700", messages.length > 0 ? "block" : "")}>
+                {messages.length === 0 ? (
+                  <div className={cn("animate-out slide-out-to-top duration-700", messages.length > 0 ? "hidden" : "block")}>
                     <Welcome />
                   </div>
-                )}
-                
-                {messages.length > 0 && (
+                ) : (
                    <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000">
                      <ChatMessages 
                         messages={messages}
