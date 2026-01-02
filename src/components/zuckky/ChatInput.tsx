@@ -57,8 +57,8 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
 
   return (
     <div className="relative w-full max-w-4xl mx-auto">
-      <div className="relative p-4 pb-2">
-        <div className="relative flex w-full flex-col rounded-2xl border border-input bg-input">
+      <div className="p-4 pb-2">
+        <div className="relative flex w-full flex-col rounded-2xl bg-input">
           <Textarea
             ref={textareaRef}
             placeholder="Give me instructions for your video..."
