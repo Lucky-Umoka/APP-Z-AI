@@ -56,7 +56,7 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4 pb-4">
+    <div className="w-full">
       <div className="relative w-full rounded-2xl bg-card">
         <Textarea
           ref={textareaRef}
