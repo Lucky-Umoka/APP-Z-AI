@@ -10,16 +10,7 @@ import { ArrowDown, Film, MessageSquare, Zap } from 'lucide-react';
 import PreviewCanvas from '@/components/zuckky/PreviewCanvas';
 import { DragEvent, useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-
-const SuggestionPill = ({ icon, text, onClick }: { icon: React.ReactNode; text: string; onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left text-sm transition-colors hover:bg-accent/50"
-  >
-    <div className="rounded-lg bg-primary/10 p-2 text-primary">{icon}</div>
-    <span className="font-medium text-foreground">{text}</span>
-  </button>
-);
+import { cn } from '@/lib/utils';
 
 const Welcome = () => {
     const { sendMessage } = useConversation();
@@ -35,6 +26,16 @@ const Welcome = () => {
         </div>
     )
 };
+
+const SuggestionPill = ({ icon, text, onClick }: { icon: React.ReactNode; text: string; onClick: () => void }) => (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left text-sm transition-colors hover:bg-accent/50"
+    >
+      <div className="rounded-lg bg-primary/10 p-2 text-primary">{icon}</div>
+      <span className="font-medium text-foreground">{text}</span>
+    </button>
+  );
 
 
 export default function Home() {
@@ -52,6 +53,8 @@ export default function Home() {
     const [isDragging, setIsDragging] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const [showScrollDown, setShowScrollDown] = useState(false);
+    const chatContainerRef = useRef<HTMLDivElement>(null);
+    const [isWelcomeVisible, setIsWelcomeVisible] = useState(true);
 
     const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -93,33 +96,51 @@ export default function Home() {
     };
   
     useEffect(() => {
-      const scrollDiv = scrollAreaRef.current;
-      if (!scrollDiv) return;
-  
-      const isAtBottom = scrollDiv.scrollHeight - scrollDiv.scrollTop - scrollDiv.clientHeight < 250;
-      if (isAtBottom) {
-        setTimeout(() => scrollToBottom(), 0);
-      }
-    }, [messages]);
-  
-    useEffect(() => {
-      const scrollDiv = scrollAreaRef.current;
-      const handleScroll = () => {
-        if (scrollDiv) {
-          const isScrolledUp = scrollDiv.scrollTop < scrollDiv.scrollHeight - scrollDiv.clientHeight - 200;
-          setShowScrollDown(isScrolledUp);
+        if (messages.length > 0 && isWelcomeVisible) {
+          setIsWelcomeVisible(false);
         }
-      };
-  
-      if (scrollDiv) {
-          scrollDiv.addEventListener('scroll', handleScroll, { passive: true });
-      }
-      return () => {
+      }, [messages.length, isWelcomeVisible]);
+    
+      useEffect(() => {
+        const scrollDiv = scrollAreaRef.current;
+        const handleScroll = () => {
           if (scrollDiv) {
-              scrollDiv.removeEventListener('scroll', handleScroll);
+            const isScrolledUp = scrollDiv.scrollTop < scrollDiv.scrollHeight - scrollDiv.clientHeight - 200;
+            setShowScrollDown(isScrolledUp);
           }
-      };
-    }, []);
+        };
+    
+        if (scrollDiv) {
+            scrollDiv.addEventListener('scroll', handleScroll, { passive: true });
+        }
+        return () => {
+            if (scrollDiv) {
+                scrollDiv.removeEventListener('scroll', handleScroll);
+            }
+        };
+      }, []);
+
+      useEffect(() => {
+        const container = chatContainerRef.current;
+        if (!container) return;
+    
+        const observer = new MutationObserver(() => {
+          const scrollDiv = scrollAreaRef.current;
+          if (scrollDiv) {
+            const isNearBottom = scrollDiv.scrollHeight - scrollDiv.scrollTop - scrollDiv.clientHeight < 300;
+            if(isNearBottom) {
+                scrollDiv.scrollTo({
+                    top: scrollDiv.scrollHeight,
+                    behavior: 'smooth',
+                });
+            }
+          }
+        });
+    
+        observer.observe(container, { childList: true, subtree: true });
+    
+        return () => observer.disconnect();
+      }, [messages]);
 
 
   return (
@@ -127,13 +148,23 @@ export default function Home() {
       <div className="flex h-screen w-full" onDragEnter={handleDragEnter}>
         <ZuckkySidebar />
         <main ref={scrollAreaRef} className="flex-1 flex flex-col items-center relative overflow-y-auto">
-            <div className="w-full max-w-3xl flex-1">
-                {messages.length === 0 ? <Welcome /> : <ChatMessages 
-                    messages={messages}
-                    conversationStep={conversationStep}
-                    onTemplateSelect={handleTemplateSelection}
-                    onConfirm={handleConfirmation}
-                />}
+            <div ref={chatContainerRef} className="w-full max-w-3xl flex-1 flex flex-col">
+                {isWelcomeVisible && (
+                  <div className={cn("animate-out slide-out-to-top duration-700", messages.length > 0 ? "block" : "")}>
+                    <Welcome />
+                  </div>
+                )}
+                
+                {messages.length > 0 && (
+                   <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                     <ChatMessages 
+                        messages={messages}
+                        conversationStep={conversationStep}
+                        onTemplateSelect={handleTemplateSelection}
+                        onConfirm={handleConfirmation}
+                    />
+                   </div>
+                )}
             </div>
             <div className="sticky bottom-0 w-full max-w-3xl px-4 pb-4 bg-gradient-to-t from-background via-background/80 to-transparent">
                 <ChatInput onSendMessage={sendMessage} isLoading={isLoading}/>
