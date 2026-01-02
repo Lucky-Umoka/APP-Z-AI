@@ -93,13 +93,12 @@ export default function Home() {
     };
   
     useEffect(() => {
-      // Scroll to bottom when a new message is added, but only if user is near the bottom.
       const scrollDiv = scrollAreaRef.current;
-      if (scrollDiv) {
-        const isAtBottom = scrollDiv.scrollHeight - scrollDiv.scrollTop - scrollDiv.clientHeight < 200;
-        if (isAtBottom) {
-          scrollToBottom();
-        }
+      if (!scrollDiv) return;
+  
+      const isAtBottom = scrollDiv.scrollHeight - scrollDiv.scrollTop - scrollDiv.clientHeight < 250;
+      if (isAtBottom) {
+        setTimeout(() => scrollToBottom(), 0);
       }
     }, [messages]);
   
@@ -107,13 +106,13 @@ export default function Home() {
       const scrollDiv = scrollAreaRef.current;
       const handleScroll = () => {
         if (scrollDiv) {
-          const isScrolledUp = scrollDiv.scrollTop < scrollDiv.scrollHeight - scrollDiv.clientHeight - 150;
+          const isScrolledUp = scrollDiv.scrollTop < scrollDiv.scrollHeight - scrollDiv.clientHeight - 200;
           setShowScrollDown(isScrolledUp);
         }
       };
   
       if (scrollDiv) {
-          scrollDiv.addEventListener('scroll', handleScroll);
+          scrollDiv.addEventListener('scroll', handleScroll, { passive: true });
       }
       return () => {
           if (scrollDiv) {
