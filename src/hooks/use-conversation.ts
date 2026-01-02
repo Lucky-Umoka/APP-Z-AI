@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
@@ -92,7 +93,11 @@ export function useConversation() {
 
   const sendMessage = useCallback(async (message: string, file?: File) => {
     setIsLoading(true);
-    addMessage({ role: 'user', content: file ? `Uploaded: ${file.name}` : message });
+    // Only add user message if it's the start of the conversation or has content
+    if (messages.length > 0 || message || file) {
+        addMessage({ role: 'user', content: file ? `Uploaded: ${file.name}` : message });
+    }
+    
     await simulateThinking();
 
     switch (conversationStep) {
@@ -104,7 +109,7 @@ export function useConversation() {
                 setConversationStep(ConversationStep.AWAITING_TEMPLATE);
             } else {
                 setEditingDetails(prev => ({ ...prev, instructions: message }));
-                addMessage({ role: 'assistant', content: `Got it. Now please upload the video footage you'd like me to edit.` });
+                addMessage({ role: 'assistant', content: `Hi, I'm Zuckky AI, here to help you edit your videos to go viral. To get started, please give me some instructions or upload your footage.` });
                 setConversationStep(ConversationStep.AWAITING_VIDEO);
             }
             break;
@@ -163,7 +168,7 @@ export function useConversation() {
             break;
     }
     setIsLoading(false);
-  }, [conversationStep, addMessage, editingDetails]);
+  }, [conversationStep, addMessage, editingDetails, messages.length]);
 
   const handleTemplateSelection = useCallback(async (template: string) => {
     setIsLoading(true);
@@ -250,11 +255,9 @@ export function useConversation() {
   }, [addMessage, confirmationTimer, editingDetails.videoFile]);
 
   useEffect(() => {
-    // Start with the welcome message
-    if (messages.length === 0) {
-      addMessage(initialWelcomeMessage);
-    }
-  }, [addMessage, messages.length]);
+    // This effect now does nothing on initial load,
+    // allowing the Welcome screen to show on an empty message array.
+  }, []);
 
   return {
     messages,
