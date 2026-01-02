@@ -53,7 +53,6 @@ export default function Home() {
     const [isDragging, setIsDragging] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const [showScrollDown, setShowScrollDown] = useState(false);
-    const chatContainerRef = useRef<HTMLDivElement>(null);
 
     const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -94,7 +93,7 @@ export default function Home() {
       }
     };
   
-      useEffect(() => {
+    useEffect(() => {
         const scrollDiv = scrollAreaRef.current;
         const handleScroll = () => {
           if (scrollDiv) {
@@ -114,26 +113,16 @@ export default function Home() {
       }, []);
 
       useEffect(() => {
-        const container = chatContainerRef.current;
-        if (!container) return;
-    
-        const observer = new MutationObserver(() => {
-          const scrollDiv = scrollAreaRef.current;
-          if (scrollDiv) {
-            const isNearBottom = scrollDiv.scrollHeight - scrollDiv.scrollTop - scrollDiv.clientHeight < 300;
-            if(isNearBottom) {
-                scrollDiv.scrollTo({
-                    top: scrollDiv.scrollHeight,
-                    behavior: 'smooth',
-                });
-            }
-          }
-        });
-    
-        observer.observe(container, { childList: true, subtree: true });
-    
-        return () => observer.disconnect();
-      }, [messages]);
+        // This ensures we scroll to the bottom every time messages change.
+        // The timeout pushes the execution to the end of the event loop,
+        // ensuring the DOM is updated before we try to scroll.
+        if (messages.length > 0) {
+            const timer = setTimeout(() => {
+                scrollToBottom();
+            }, 0);
+            return () => clearTimeout(timer);
+        }
+      }, [messages, isLoading]);
 
 
   return (
@@ -141,7 +130,7 @@ export default function Home() {
       <div className="flex h-screen w-full" onDragEnter={handleDragEnter}>
         <ZuckkySidebar />
         <main ref={scrollAreaRef} className="flex-1 flex flex-col items-center relative overflow-y-auto">
-            <div ref={chatContainerRef} className="w-full max-w-3xl flex-1 flex flex-col">
+            <div className="w-full max-w-3xl flex-1 flex flex-col">
                 {messages.length === 0 ? (
                   <div className={cn("animate-out slide-out-to-top duration-700", messages.length > 0 ? "hidden" : "block")}>
                     <Welcome />
