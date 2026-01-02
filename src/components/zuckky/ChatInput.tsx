@@ -59,7 +59,7 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
     <div className="relative w-full max-w-4xl mx-auto">
       <div className="p-4 pb-2">
         <div className="relative w-full rounded-2xl p-px bg-border focus-within:bg-[conic-gradient(from_var(--angle),_var(--tw-gradient-stops))] focus-within:animate-border-flow">
-          <div className="relative flex w-full flex-col rounded-[15px] bg-input">
+          <div className="relative flex w-full flex-col rounded-[15px] bg-background">
             <Textarea
               ref={textareaRef}
               placeholder="Give me instructions for your video..."
