@@ -103,9 +103,6 @@ export default function ChatInterface() {
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl px-4">
             <div className="w-full text-center">
-              <div className="flex justify-center mb-4">
-                <Logo className="w-10 h-10" />
-              </div>
                 <h1 className="text-4xl font-bold tracking-tight">Welcome to Zuckky AI</h1>
                 <p className="mb-8 mt-2 text-lg text-muted-foreground">Start editing by giving an instruction or uploading footage.</p>
                 <div className="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
