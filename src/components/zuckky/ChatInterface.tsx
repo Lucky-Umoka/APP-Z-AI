@@ -92,26 +92,28 @@ export default function ChatInterface() {
         ref={scrollAreaRef}
         className="flex-1 overflow-y-auto"
       >
-        {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center">
-            <div className="mx-auto w-full max-w-4xl text-center">
-              <h1 className="text-4xl font-bold tracking-tight">Welcome to Zuckky AI</h1>
-              <p className="mb-8 mt-2 text-lg text-muted-foreground">Start editing by giving an instruction or uploading footage.</p>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl w-full px-4">
-                  <SuggestionPill icon={<MessageSquare />} text="What styles of videos can you edit?" onClick={() => sendMessage("What styles of videos can you edit?")} />
-                  <SuggestionPill icon={<Film />} text="Turn this into a viral short-form clip" onClick={() => sendMessage("Turn this into a viral short-form clip")} />
-                  <SuggestionPill icon={<Zap />} text="Make this video more engaging" onClick={() => sendMessage("Make this video more engaging")} />
+        <div className="h-full w-full">
+          {messages.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center">
+              <div className="mx-auto w-full max-w-4xl text-center">
+                <h1 className="text-4xl font-bold tracking-tight">Welcome to Zuckky AI</h1>
+                <p className="mb-8 mt-2 text-lg text-muted-foreground">Start editing by giving an instruction or uploading footage.</p>
+                <div className="mx-auto grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl w-full px-4">
+                    <SuggestionPill icon={<MessageSquare />} text="What styles of videos can you edit?" onClick={() => sendMessage("What styles of videos can you edit?")} />
+                    <SuggestionPill icon={<Film />} text="Turn this into a viral short-form clip" onClick={() => sendMessage("Turn this into a viral short-form clip")} />
+                    <SuggestionPill icon={<Zap />} text="Make this video more engaging" onClick={() => sendMessage("Make this video more engaging")} />
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <ChatMessages
-            messages={messages}
-            conversationStep={conversationStep}
-            onTemplateSelect={handleTemplateSelection}
-            onConfirm={handleConfirmation}
-          />
-        )}
+          ) : (
+            <ChatMessages
+              messages={messages}
+              conversationStep={conversationStep}
+              onTemplateSelect={handleTemplateSelection}
+              onConfirm={handleConfirmation}
+            />
+          )}
+        </div>
       </div>
 
       <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm">
