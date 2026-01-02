@@ -7,6 +7,7 @@ import ChatMessages from './ChatMessages';
 import PreviewCanvas from './PreviewCanvas';
 import { Button } from '../ui/button';
 import { ArrowDown, Film, MessageSquare, Zap } from 'lucide-react';
+import Logo from './Logo';
 
 export default function ChatInterface() {
   const {
@@ -98,10 +99,13 @@ export default function ChatInterface() {
   );
   
   return (
-    <div className="flex h-full w-full flex-col" onDragEnter={handleDragEnter}>
+    <div className="flex h-full w-full flex-col items-center overflow-hidden" onDragEnter={handleDragEnter}>
         {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center w-full max-w-4xl">
-            <div className="w-full px-4 text-center">
+          <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl px-4">
+            <div className="w-full text-center">
+              <div className="flex justify-center mb-4">
+                <Logo className="w-10 h-10" />
+              </div>
                 <h1 className="text-4xl font-bold tracking-tight">Welcome to Zuckky AI</h1>
                 <p className="mb-8 mt-2 text-lg text-muted-foreground">Start editing by giving an instruction or uploading footage.</p>
                 <div className="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -112,7 +116,7 @@ export default function ChatInterface() {
             </div>
           </div>
         ) : (
-            <div className='w-full max-w-4xl mx-auto flex-1 flex flex-col'>
+            <div className='w-full max-w-3xl flex-1 flex flex-col overflow-hidden'>
                 <div
                     ref={scrollAreaRef}
                     className="w-full flex-1 overflow-y-auto"
@@ -126,7 +130,7 @@ export default function ChatInterface() {
                 </div>
             </div>
         )}
-        <div className="sticky bottom-0 w-full bg-background/80 backdrop-blur-sm">
+        <div className="w-full flex justify-center sticky bottom-0 bg-background/80 backdrop-blur-sm">
             <ChatInput onSendMessage={sendMessage} isLoading={isLoading} />
         </div>
 
