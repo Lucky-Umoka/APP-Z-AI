@@ -19,13 +19,13 @@ export function UserProfile() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex h-auto w-full items-center justify-start gap-2 p-2"
+          className="flex h-auto w-full items-center justify-start gap-2 px-2 py-1"
         >
           <Avatar className="h-8 w-8">
             <AvatarImage src="https://picsum.photos/seed/user-avatar/40/40" alt="User" />
             <AvatarFallback>U</AvatarFallback>
           </Avatar>
-          <div className="hidden text-left group-data-[collapsible=icon]:hidden">
+          <div className="text-left group-data-[collapsible=icon]:hidden">
             <p className="text-sm font-medium">User</p>
             <p className="text-xs text-muted-foreground">user@example.com</p>
           </div>
