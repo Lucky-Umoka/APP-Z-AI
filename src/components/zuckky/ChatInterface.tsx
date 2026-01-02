@@ -98,17 +98,17 @@ export default function ChatInterface() {
   );
   
   return (
-    <div className="flex h-full w-full flex-col" onDragEnter={handleDragEnter}>
+    <div className="flex h-screen w-full flex-col" onDragEnter={handleDragEnter}>
         {messages.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center">
             <div className="w-full max-w-4xl px-4 text-center">
-            <h1 className="text-4xl font-bold tracking-tight">Welcome to Zuckky AI</h1>
-            <p className="mb-8 mt-2 text-lg text-muted-foreground">Start editing by giving an instruction or uploading footage.</p>
-            <div className="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <SuggestionPill icon={<MessageSquare />} text="What styles of videos can you edit?" onClick={() => sendMessage("What styles of videos can you edit?")} />
-                <SuggestionPill icon={<Film />} text="Turn this into a viral short-form clip" onClick={() => sendMessage("Turn this into a viral short-form clip")} />
-                <SuggestionPill icon={<Zap />} text="Make this video more engaging" onClick={() => sendMessage("Make this video more engaging")} />
-            </div>
+                <h1 className="text-4xl font-bold tracking-tight">Welcome to Zuckky AI</h1>
+                <p className="mb-8 mt-2 text-lg text-muted-foreground">Start editing by giving an instruction or uploading footage.</p>
+                <div className="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <SuggestionPill icon={<MessageSquare />} text="What styles of videos can you edit?" onClick={() => sendMessage("What styles of videos can you edit?")} />
+                    <SuggestionPill icon={<Film />} text="Turn this into a viral short-form clip" onClick={() => sendMessage("Turn this into a viral short-form clip")} />
+                    <SuggestionPill icon={<Zap />} text="Make this video more engaging" onClick={() => sendMessage("Make this video more engaging")} />
+                </div>
             </div>
         </div>
         ) : (
