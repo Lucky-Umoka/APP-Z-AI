@@ -20,7 +20,7 @@ interface ChatMessagesProps {
 
 export default function ChatMessages({ messages, conversationStep, onTemplateSelect, onConfirm }: ChatMessagesProps) {
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 px-4 pb-8 pt-12">
+    <div className="space-y-8 px-4 pb-8 pt-12">
       {messages.map((message, index) => (
         <div
           key={message.id}
