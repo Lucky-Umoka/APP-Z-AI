@@ -98,10 +98,10 @@ export default function ChatInterface() {
   );
   
   return (
-    <div className='relative flex h-screen w-full flex-col overflow-hidden' onDragEnter={handleDragEnter}>
-      <main ref={scrollAreaRef} className='flex-1 flex flex-col overflow-y-auto'>
+    <div className='relative flex h-screen w-full flex-col items-center overflow-hidden' onDragEnter={handleDragEnter}>
+      <main ref={scrollAreaRef} className='flex-1 flex flex-col items-center overflow-y-auto w-full'>
         {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-4">
+          <div className="flex flex-col items-center justify-center min-h-[60vh] w-full max-w-2xl text-center px-6">
               <h1 className="text-4xl font-bold tracking-tight">Welcome to Zuckky AI</h1>
               <p className="mb-8 mt-2 text-lg text-muted-foreground">Start editing by giving an instruction or uploading footage.</p>
               <div className="mx-auto grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -111,7 +111,7 @@ export default function ChatInterface() {
               </div>
           </div>
         ) : (
-          <div className='w-full max-w-3xl flex-1 flex flex-col overflow-hidden mx-auto'>
+          <div className='w-full max-w-3xl flex-1 flex flex-col overflow-hidden'>
               <ChatMessages
                 messages={messages}
                 conversationStep={conversationStep}
