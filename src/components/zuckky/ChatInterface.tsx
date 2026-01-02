@@ -34,6 +34,9 @@ export default function ChatInterface() {
   const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    if (e.relatedTarget && (e.currentTarget as any).contains(e.relatedTarget as Node)) {
+        return;
+    }
     setIsDragging(false);
   };
 
@@ -88,39 +91,36 @@ export default function ChatInterface() {
   
   return (
     <div className="flex h-full w-full flex-col" onDragEnter={handleDragEnter}>
-        {messages.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center">
-            <div className="w-full max-w-4xl px-4 text-center">
-              <h1 className="text-4xl font-bold tracking-tight">Welcome to Zuckky AI</h1>
-              <p className="mb-8 mt-2 text-lg text-muted-foreground">Start editing by giving an instruction or uploading footage.</p>
-              <div className="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <SuggestionPill icon={<MessageSquare />} text="What styles of videos can you edit?" onClick={() => sendMessage("What styles of videos can you edit?")} />
-                  <SuggestionPill icon={<Film />} text="Turn this into a viral short-form clip" onClick={() => sendMessage("Turn this into a viral short-form clip")} />
-                  <SuggestionPill icon={<Zap />} text="Make this video more engaging" onClick={() => sendMessage("Make this video more engaging")} />
-              </div>
+        <div className="w-full max-w-4xl flex-1 flex flex-col justify-center">
+            {messages.length === 0 ? (
+            <div className="flex flex-1 flex-col items-center justify-center">
+                <div className="w-full max-w-2xl px-4 text-center">
+                <h1 className="text-4xl font-bold tracking-tight">Welcome to Zuckky AI</h1>
+                <p className="mb-8 mt-2 text-lg text-muted-foreground">Start editing by giving an instruction or uploading footage.</p>
+                <div className="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <SuggestionPill icon={<MessageSquare />} text="What styles of videos can you edit?" onClick={() => sendMessage("What styles of videos can you edit?")} />
+                    <SuggestionPill icon={<Film />} text="Turn this into a viral short-form clip" onClick={() => sendMessage("Turn this into a viral short-form clip")} />
+                    <SuggestionPill icon={<Zap />} text="Make this video more engaging" onClick={() => sendMessage("Make this video more engaging")} />
+                </div>
+                </div>
             </div>
-             <div className="w-full">
-              <ChatInput onSendMessage={sendMessage} isLoading={isLoading} />
-            </div>
-          </div>
-        ) : (
-            <>
-            <div
-                ref={scrollAreaRef}
-                className="flex-1 overflow-y-auto"
-            >
-                <ChatMessages
-                messages={messages}
-                conversationStep={conversationStep}
-                onTemplateSelect={handleTemplateSelection}
-                onConfirm={handleConfirmation}
-                />
-            </div>
-             <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm">
-                <ChatInput onSendMessage={sendMessage} isLoading={isLoading} />
-            </div>
-            </>
-        )}
+            ) : (
+                <div
+                    ref={scrollAreaRef}
+                    className="w-full flex-1 overflow-y-auto"
+                >
+                    <ChatMessages
+                    messages={messages}
+                    conversationStep={conversationStep}
+                    onTemplateSelect={handleTemplateSelection}
+                    onConfirm={handleConfirmation}
+                    />
+                </div>
+            )}
+        </div>
+        <div className="sticky bottom-0 w-full bg-background/80 backdrop-blur-sm">
+            <ChatInput onSendMessage={sendMessage} isLoading={isLoading} />
+        </div>
 
       {showScrollDown && (
           <Button
