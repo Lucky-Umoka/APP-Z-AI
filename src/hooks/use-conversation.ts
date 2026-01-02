@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Message, ConversationStep, ProcessingState } from '@/lib/types';
-import { postToMakeWebhook } from '@/lib/actions';
+import { Message, ConversationStep, ProcessingState, EditingDetails } from '@/lib/types';
 
 let messageIdCounter = 0;
 const getUniqueId = () => `msg_${Date.now()}_${messageIdCounter++}`;
@@ -10,7 +9,7 @@ const getUniqueId = () => `msg_${Date.now()}_${messageIdCounter++}`;
 const initialWelcomeMessage: Message = {
   id: getUniqueId(),
   role: 'assistant',
-  content: "Hi, I'm Zuckky AI, here to help you edit your videos to go viral. To get started, please upload your footage by clicking the paperclip icon or dragging a video file into the chat.",
+  content: "Hi, I'm Zuckky AI, here to help you edit your videos to go viral. To get started, please give me some instructions or upload your footage.",
   type: 'text'
 };
 
@@ -21,11 +20,14 @@ export function useConversation() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationStep, setConversationStep] = useState<ConversationStep>(ConversationStep.WELCOME);
   const [isLoading, setIsLoading] = useState(false);
-  const [editingDetails, setEditingDetails] = useState({
-    videoUrl: null as string | null,
+  const [editingDetails, setEditingDetails] = useState<EditingDetails>({
+    videoFile: null,
+    trainingFile: null,
     template: '',
     customDetails: '',
-    instructions: ''
+    instructions: '',
+    summaryPlan: null,
+    editedVideoUrl: null,
   });
   const [isCanvasOpen, setCanvasOpen] = useState(false);
   const [confirmationTimer, setConfirmationTimer] = useState<NodeJS.Timeout | null>(null);
@@ -42,74 +44,135 @@ export function useConversation() {
 
   const simulateThinking = (duration = 1000) => new Promise(resolve => setTimeout(resolve, duration));
 
-  const handleStepLogic = async (userInput: string, file?: File) => {
-    await postToMakeWebhook({ step: conversationStep, input: userInput, fileName: file?.name });
-    await simulateThinking();
+  const resetForNewVideo = () => {
+    setEditingDetails({
+        videoFile: null,
+        trainingFile: null,
+        template: '',
+        customDetails: '',
+        instructions: '',
+        summaryPlan: null,
+        editedVideoUrl: null,
+    });
+    setConversationStep(ConversationStep.AWAITING_VIDEO);
+    addMessage({ role: 'assistant', content: 'Great! Please upload your new footage and provide instructions.' });
+  };
+  
+  const handleFurtherInstructions = (userInput: string) => {
+    // If we just finished a video, and the user gives more instructions
+    if (conversationStep === ConversationStep.DONE) {
+      addMessage({ role: 'user', content: userInput });
+      // Reset relevant details but keep the context of the edited video
+      setEditingDetails(prev => ({
+        ...prev,
+        instructions: userInput, // This is the new instruction
+        customDetails: '', // Clear previous custom details
+        summaryPlan: null, // Clear old summary
+      }));
+      // Go back to the confirmation step
+      setConversationStep(ConversationStep.AWAITING_CONFIRMATION);
+      const summary = {
+          Topic: 'Further edits on the previous video.',
+          'Your Instructions': `"${userInput}"`,
+          'Previous Template': `"${editingDetails.template}"`,
+          'Action Plan': 'Apply new edits to the previously generated video.',
+      };
+      setEditingDetails(prev => ({ ...prev, summaryPlan: summary }));
+      addMessage({ 
+        role: 'assistant', 
+        content: '', 
+        type: 'confirmation',
+        summaryDetails: summary,
+      });
 
-    switch (conversationStep) {
-      case ConversationStep.WELCOME:
-        if (file) {
-          const videoUrl = URL.createObjectURL(file);
-          setEditingDetails(prev => ({ ...prev, videoUrl }));
-          addMessage({ role: 'assistant', content: `Great, your footage is uploaded. Now, please select an editing style for your video.`, type: 'template-selection' });
-          setConversationStep(ConversationStep.AWAITING_TEMPLATE);
-        } else {
-          addMessage({ role: 'assistant', content: initialWelcomeMessage.content });
-        }
-        break;
-
-      case ConversationStep.AWAITING_TEMPLATE:
-        addMessage({ role: 'assistant', content: 'Please select one of the templates to continue.' });
-        break;
-
-      case ConversationStep.AWAITING_CUSTOM_DETAILS:
-        setEditingDetails(prev => ({ ...prev, customDetails: userInput }));
-        addMessage({ role: 'assistant', content: "Thanks. Any other special instructions for editing?", type: 'text' });
-        setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
-        break;
-
-      case ConversationStep.AWAITING_INSTRUCTIONS:
-        setEditingDetails(prev => ({ ...prev, instructions: userInput }));
-        setConversationStep(ConversationStep.AWAITING_CONFIRMATION);
-        const summary = `I will edit your video using the "${editingDetails.template}" style. Key instructions: "${userInput}". ${editingDetails.customDetails ? `Custom details: "${editingDetails.customDetails}".` : ''} \n\nIs this correct? I'll start automatically in 60 seconds if you don't respond.`;
-        addMessage({ role: 'assistant', content: summary, type: 'confirmation' });
-        const timer = setTimeout(() => handleConfirmation(true), 60000);
-        setConfirmationTimer(timer);
-        break;
-
-        case ConversationStep.AWAITING_CONFIRMATION:
-            if (userInput.toLowerCase().trim() === 'yes') {
-                handleConfirmation(true);
-            } else {
-                handleConfirmation(false, userInput);
-            }
-            break;
-
-      default:
-        addMessage({ role: 'assistant', content: "I'm not sure how to handle that right now. You can try giving me new instructions or uploading a new video." });
+      const timer = setTimeout(() => handleConfirmation(true), 60000);
+      setConfirmationTimer(timer);
     }
   };
 
   const sendMessage = useCallback(async (message: string, file?: File) => {
     setIsLoading(true);
-    if(messages.length === 0 && !file) {
-      // Don't add user message for initial suggestions.
-    } else {
-      addMessage({ role: 'user', content: file ? `Uploaded: ${file.name}` : message });
+    addMessage({ role: 'user', content: file ? `Uploaded: ${file.name}` : message });
+    await simulateThinking();
+
+    switch (conversationStep) {
+        case ConversationStep.WELCOME:
+        case ConversationStep.AWAITING_VIDEO:
+            if (file) {
+                setEditingDetails(prev => ({ ...prev, videoFile: file }));
+                addMessage({ role: 'assistant', content: `Great, your footage is uploaded. Now, please select an editing style for your video.`, type: 'template-selection' });
+                setConversationStep(ConversationStep.AWAITING_TEMPLATE);
+            } else {
+                setEditingDetails(prev => ({ ...prev, instructions: message }));
+                addMessage({ role: 'assistant', content: `Got it. Now please upload the video footage you'd like me to edit.` });
+                setConversationStep(ConversationStep.AWAITING_VIDEO);
+            }
+            break;
+
+        case ConversationStep.AWAITING_CUSTOM_DETAILS:
+            if (file) {
+                setEditingDetails(prev => ({ ...prev, trainingFile: file }));
+                addMessage({ role: 'assistant', content: 'Thank you. I have been trained on your unique editing style. Any other special instructions for editing?' });
+                setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
+            } else {
+                addMessage({ role: 'assistant', content: 'Please upload a video file for training.' });
+            }
+            break;
+
+        case ConversationStep.AWAITING_INSTRUCTIONS:
+            setEditingDetails(prev => ({ ...prev, instructions: message }));
+            setConversationStep(ConversationStep.AWAITING_CONFIRMATION);
+            const summary = {
+                Topic: `Video edit using ${editingDetails.template} style`,
+                'Your Instructions': `"${message}"`,
+                'Script Plan': 'The script will be automatically generated from the info provided.',
+                'Target Language': 'English (United States)',
+                'Supplemental Footage (B-roll)': 'AI illustration with a biological motion style',
+                Captions: 'Enabled',
+                ...(editingDetails.customDetails && { 'Custom Training': `Based on the video provided` }),
+            };
+            setEditingDetails(prev => ({ ...prev, summaryPlan: summary }));
+            addMessage({ 
+                role: 'assistant', 
+                content: '', // Content is now handled by the SummaryCard
+                type: 'confirmation',
+                summaryDetails: summary
+            });
+            const timer = setTimeout(() => handleConfirmation(true), 60000);
+            setConfirmationTimer(timer);
+            break;
+
+        case ConversationStep.AWAITING_CONFIRMATION:
+            if (message.toLowerCase().trim() === 'yes') {
+                handleConfirmation(true);
+            } else {
+                handleConfirmation(false, message);
+            }
+            break;
+        
+        case ConversationStep.DONE:
+            if (message.toLowerCase().includes("new video")) {
+                resetForNewVideo();
+            } else {
+                handleFurtherInstructions(message);
+            }
+            break;
+
+        default:
+            addMessage({ role: 'assistant', content: "I'm not sure how to handle that right now. You can try giving me new instructions or uploading a new video." });
+            break;
     }
-    await handleStepLogic(message, file);
     setIsLoading(false);
-  }, [conversationStep, addMessage, messages.length]);
+  }, [conversationStep, addMessage, editingDetails]);
 
   const handleTemplateSelection = useCallback(async (template: string) => {
     setIsLoading(true);
     addMessage({ role: 'user', content: `Selected template: ${template}` });
     setEditingDetails(prev => ({ ...prev, template }));
-    await postToMakeWebhook({ step: 'TEMPLATE_SELECTED', template });
     await simulateThinking();
 
     if (template === 'Custom') {
-      addMessage({ role: 'assistant', content: 'Please describe the custom style you want.' });
+      addMessage({ role: 'assistant', content: 'To create a custom style, please upload a video for me to learn from.' });
       setConversationStep(ConversationStep.AWAITING_CUSTOM_DETAILS);
     } else {
       addMessage({ role: 'assistant', content: 'Got it. Any other editing instructions?' });
@@ -130,48 +193,50 @@ export function useConversation() {
       await simulateThinking();
       setConversationStep(ConversationStep.PROCESSING);
       
+      const fileToProcess = editingDetails.videoFile;
+      const videoUrl = fileToProcess ? URL.createObjectURL(fileToProcess) : null;
+      
       const initialState: ProcessingState = {
-        videoUrl: editingDetails.videoUrl,
+        videoUrl: videoUrl,
         progress: 0,
         currentStep: 0,
       };
       const processingMessageId = addMessage({ role: 'assistant', content: '', type: 'processing', processingState: initialState });
   
       const interval = setInterval(() => {
+        let shouldClear = false;
         setMessages(prevMessages => {
-          const currentMessage = prevMessages.find(msg => msg.id === processingMessageId);
-          if (currentMessage && currentMessage.processingState) {
-            const nextStep = currentMessage.processingState.currentStep + 1;
-            
-            if (nextStep > TOTAL_PROCESSING_STEPS) {
-              clearInterval(interval);
-              setIsLoading(false);
-              
-              // Final update to 100% and then trigger canvas opening
-              updateMessage(processingMessageId, {
-                processingState: { ...currentMessage.processingState, progress: 100, isCollapsibleOpen: false }
-              });
-
-              // Wait 1.5 seconds after collapsing, then open canvas
-              setTimeout(() => {
-                setCanvasOpen(true);
-              }, 1500);
-
-              setConversationStep(ConversationStep.DONE);
-              return prevMessages;
-            }
-  
-            const newProgress = (nextStep / TOTAL_PROCESSING_STEPS) * 100;
-            const newState: ProcessingState = {
-              ...currentMessage.processingState,
-              progress: newProgress,
-              currentStep: nextStep,
-              isCollapsibleOpen: true, // Keep it open during processing
-            };
-            updateMessage(processingMessageId, { processingState: newState });
-          }
-          return prevMessages;
+            const updatedMessages = prevMessages.map(msg => {
+                if (msg.id === processingMessageId && msg.processingState) {
+                    const nextStep = msg.processingState.currentStep + 1;
+                    if (nextStep > TOTAL_PROCESSING_STEPS) {
+                        shouldClear = true;
+                        return {
+                            ...msg,
+                            processingState: { ...msg.processingState, progress: 100, isCollapsibleOpen: false }
+                        };
+                    }
+                    const newProgress = (nextStep / TOTAL_PROCESSING_STEPS) * 100;
+                    return {
+                        ...msg,
+                        processingState: { ...msg.processingState, progress: newProgress, currentStep: nextStep, isCollapsibleOpen: true }
+                    };
+                }
+                return msg;
+            });
+            return updatedMessages;
         });
+
+        if (shouldClear) {
+            clearInterval(interval);
+            setIsLoading(false);
+            setEditingDetails(prev => ({...prev, editedVideoUrl: videoUrl }));
+            setTimeout(() => {
+                setCanvasOpen(true);
+            }, 1500);
+            setConversationStep(ConversationStep.DONE);
+            addMessage({ role: 'assistant', content: 'Your video is ready. Let me know if you would like any changes or want to start a new project.' });
+        }
       }, PROCESSING_STEP_DURATION);
   
     } else {
@@ -179,9 +244,17 @@ export function useConversation() {
       await simulateThinking();
       addMessage({ role: 'assistant', content: 'No problem. Please provide your updated instructions.' });
       setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
+      setEditingDetails(prev => ({...prev, summaryPlan: null})); // Clear old summary
       setIsLoading(false);
     }
-  }, [addMessage, confirmationTimer, editingDetails.videoUrl]);
+  }, [addMessage, confirmationTimer, editingDetails.videoFile]);
+
+  useEffect(() => {
+    // Start with the welcome message
+    if (messages.length === 0) {
+      addMessage(initialWelcomeMessage);
+    }
+  }, [addMessage, messages.length]);
 
   return {
     messages,
@@ -189,7 +262,7 @@ export function useConversation() {
     isLoading,
     isCanvasOpen,
     setCanvasOpen,
-    editedVideoUrl: editingDetails.videoUrl,
+    editedVideoUrl: editingDetails.editedVideoUrl,
     conversationStep,
     handleTemplateSelection,
     handleConfirmation,
