@@ -52,9 +52,8 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
   return (
     <div className="relative w-full max-w-4xl mx-auto">
       <div className="relative p-4 pb-2">
-        <div className="group relative rounded-2xl p-[2px] focus-within:bg-[conic-gradient(from_var(--angle),_transparent_0%,_var(--zuckky-green)_50%,_transparent_100%)] focus-within:[animation:border-flow_3s_linear_infinite]">
-          <div className="absolute inset-0 rounded-2xl border border-border group-focus-within:hidden"></div>
-          <div className="relative flex min-h-[52px] w-full items-center rounded-[14px] bg-input pl-4">
+        <div className="group relative rounded-2xl p-px bg-border focus-within:bg-[conic-gradient(from_var(--angle),_transparent_0%,_var(--zuckky-green)_50%,_transparent_100%)] focus-within:[animation:border-flow_3s_linear_infinite]">
+          <div className="relative flex min-h-[52px] w-full items-center rounded-[15px] bg-input pl-4">
             <Textarea
               placeholder="Give me instructions for your video..."
               value={message}
