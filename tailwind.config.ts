@@ -1,4 +1,4 @@
-import type {Config} from 'tailwindcss';
+import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class'],
@@ -8,6 +8,13 @@ export default {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
+    container: {
+      center: true,
+      padding: '2rem',
+      screens: {
+        '2xl': '1400px',
+      },
+    },
     extend: {
       fontFamily: {
         body: ['Inter', 'sans-serif'],
@@ -73,25 +80,28 @@ export default {
       },
       keyframes: {
         'accordion-down': {
-          from: {
-            height: '0',
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)',
-          },
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
         },
         'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)',
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
+        },
+        'breathing-neon': {
+          '0%, 100%': {
+            borderColor: 'hsl(var(--primary) / 0.4)',
+            boxShadow: '0 0 5px hsl(var(--primary) / 0.2)',
           },
-          to: {
-            height: '0',
+          '50%': {
+            borderColor: 'hsl(var(--primary) / 1)',
+            boxShadow: '0 0 20px hsl(var(--primary) / 0.5)',
           },
         },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'breathing-neon': 'breathing-neon 4s ease-in-out infinite',
       },
     },
   },

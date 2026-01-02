@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "default",
+      "description": "Default placeholder image",
+      "imageUrl": "https://images.unsplash.com/photo-1604079628040-94301bb21b91?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGdyYWRpZW50fGVufDB8fHx8MTc2NzI2OTg3Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract gradient"
+    },
+    {
+      "id": "hormozi",
+      "description": "Hormozi style template image",
+      "imageUrl": "https://images.unsplash.com/photo-1560250097-0b93528c311a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxidXNpbmVzcyUyMG1hbnxlbnwwfHx8fDE3NjczNDUyNDZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "business man"
+    },
+    {
+      "id": "gadzhi",
+      "description": "Gadzhi style template image",
+      "imageUrl": "https://images.unsplash.com/photo-1728970381320-b40a223e46d5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxsdXh1cnklMjBsaWZlc3R5bGV8ZW58MHx8fHwxNzY3MzQ1MjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "luxury lifestyle"
+    },
+    {
+      "id": "garyvee",
+      "description": "Gary Vee style template image",
+      "imageUrl": "https://images.unsplash.com/photo-1718664485465-2b40ab6a86c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxkeW5hbWljJTIwc3BlYWtlcnxlbnwwfHx8fDE3NjczNDUyNDZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "dynamic speaker"
+    },
+    {
+      "id": "custom",
+      "description": "Custom style template image",
+      "imageUrl": "https://images.unsplash.com/photo-1676018526208-0c80014f8a50?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhYnN0cmFjdCUyMGRlc2lnbnxlbnwwfHx8fDE3NjcyOTIxNDB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract design"
+    },
+    {
+      "id": "user-avatar",
+      "description": "User avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1590086782792-42dd2350140d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjcyOTI1NDF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    }
+  ]
 }
