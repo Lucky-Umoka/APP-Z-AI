@@ -14,18 +14,25 @@ interface ChatInputProps {
 export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
   const [message, setMessage] = React.useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleTextareaChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(event.target.value);
     // Auto-resize textarea
-    event.target.style.height = 'auto';
-    event.target.style.height = `${event.target.scrollHeight}px`;
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
   };
 
   const handleSendMessage = () => {
     if (isLoading || !message.trim()) return;
     onSendMessage(message.trim());
     setMessage('');
+     if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
     }
@@ -55,6 +62,7 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
         <div className="group relative rounded-2xl bg-border p-px focus-within:bg-[conic-gradient(from_var(--angle),_transparent_0%,_var(--zuckky-green)_50%,_transparent_100%)] focus-within:animate-border-flow">
           <div className="relative flex w-full flex-col rounded-[15px] bg-input">
             <Textarea
+              ref={textareaRef}
               placeholder="Give me instructions for your video..."
               value={message}
               onChange={handleTextareaChange}

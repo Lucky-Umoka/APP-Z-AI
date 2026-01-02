@@ -1,11 +1,18 @@
 import ChatInterface from '@/components/zuckky/ChatInterface';
+import { ZuckkySidebar } from '@/components/zuckky/ZuckkySidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background">
-      <main className="flex h-screen w-full flex-col">
-        <ChatInterface />
-      </main>
-    </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen">
+        <ZuckkySidebar />
+        <SidebarInset>
+          <main className="flex h-screen w-full flex-col">
+            <ChatInterface />
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 }
