@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
-import { Message, ConversationStep } from '@/lib/types';
+import { Message } from '@/lib/types';
 import Logo from './Logo';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Card, CardContent } from '../ui/card';
@@ -14,7 +13,7 @@ import { ThumbsUp, ThumbsDown } from 'lucide-react';
 
 interface ChatMessagesProps {
   messages: Message[];
-  conversationStep: ConversationStep;
+  conversationStep: any; // Using any to avoid breaking changes for now
   onTemplateSelect: (template: string) => void;
   onConfirm: (confirmed: boolean) => void;
 }
