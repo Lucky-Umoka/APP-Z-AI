@@ -18,30 +18,32 @@ import { UserProfile } from './UserProfile';
 export function ZuckkySidebar() {
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
+      <SidebarHeader className="p-2">
         <div className="flex items-center justify-between">
-            <div className="p-2 flex items-center gap-2">
-                <Logo className="h-7 w-7" />
-                <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden">Zuckky</span>
-            </div>
-          <SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
+          <div className="flex flex-1 items-center gap-2 overflow-hidden">
+            <Logo className="h-7 w-7 shrink-0" />
+            <span className="truncate text-lg font-semibold group-data-[collapsible=icon]:hidden">
+              Zuckky
+            </span>
+          </div>
+          <SidebarTrigger />
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="p-2">
         <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton
-                    onClick={() => window.location.reload()}
-                    className="bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
-                    tooltip="New Video"
-                >
-                    <MessageSquarePlus />
-                    <span className="group-data-[collapsible=icon]:hidden">New Video</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => window.location.reload()}
+              className="bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+              tooltip="New Video"
+            >
+              <MessageSquarePlus />
+              <span className="group-data-[collapsible=icon]:hidden">New Video</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
-        <div className="mt-4 px-3 text-xs font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">
-            Recent
+        <div className="mt-4 px-2 text-xs font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">
+          Recent
         </div>
         <SidebarMenu className="mt-2">
           <SidebarMenuItem>
@@ -58,7 +60,7 @@ export function ZuckkySidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Settings">
@@ -67,8 +69,8 @@ export function ZuckkySidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <div className="p-2">
-            <UserProfile />
+        <div className="mt-2">
+          <UserProfile />
         </div>
       </SidebarFooter>
     </Sidebar>
