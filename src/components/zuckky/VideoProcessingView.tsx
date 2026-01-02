@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2, Circle, Loader, PlayCircle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { CheckCircle2, Circle, Loader, PlayCircle, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -17,15 +17,36 @@ interface VideoProcessingViewProps extends ProcessingState {
 }
 
 const processingSteps = [
-  'Reviewing screenplay examples',
-  'Planning your video',
-  'Choosing the video style',
-  'Creating the script',
-  'Writing captions for your video',
-  'Selecting background music',
-  'Assigning a narrator',
-  'Selecting the visuals',
+    'Reviewing screenplay examples',
+    'Planning your video',
+    'Choosing the video style',
+    'Creating the script',
+    'Writing captions for your video',
+    'Selecting background music',
+    'Assigning a narrator',
+    'Selecting the visuals',
 ];
+
+// Custom SVG Icons to match the screenshot
+const CompletedIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="8" cy="8" r="8" fill="#10B981"/>
+        <path d="M5 8.5L7.5 11L11.5 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+
+const InProgressIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="animate-spin">
+        <path d="M8 1.5C4.41015 1.5 1.5 4.41015 1.5 8C1.5 11.5898 4.41015 14.5 8 14.5C11.5898 14.5 14.5 11.5898 14.5 8" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+);
+
+const PendingIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="8" cy="8" r="7.5" stroke="#4B5563"/>
+    </svg>
+);
+
 
 export default function VideoProcessingView({ 
     progress, 
@@ -55,7 +76,7 @@ export default function VideoProcessingView({
                         <div className="relative h-12 w-12">
                             <svg className="h-full w-full" viewBox="0 0 36 36">
                                 <path
-                                    className="stroke-muted"
+                                    className="stroke-muted/30"
                                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                     fill="none"
                                     strokeWidth="3"
@@ -68,7 +89,7 @@ export default function VideoProcessingView({
                                     strokeDasharray={`${progress}, 100`}
                                 />
                             </svg>
-                            <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
+                            <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-foreground">
                                 {isComplete ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : `${Math.round(progress)}%`}
                             </div>
                         </div>
@@ -76,12 +97,13 @@ export default function VideoProcessingView({
 
                     {/* Middle Section: Main Text & Trigger */}
                     <div className="flex-1">
-                        <AccordionTrigger className="p-0 hover:no-underline w-full justify-start gap-2 text-left">
-                            <p className="text-base font-medium">
-                                {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
-                            </p>
+                        <p className="text-base font-medium">
+                            {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
+                        </p>
+                         <AccordionTrigger className="p-0 hover:no-underline w-full justify-start gap-1 text-sm text-muted-foreground mt-1">
+                            <span>Reasoning</span>
+                            <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
                         </AccordionTrigger>
-                        <p className="text-sm text-muted-foreground mt-1">Reasoning</p>
                     </div>
 
                     {/* Right Section: Thumbnail */}
@@ -99,20 +121,24 @@ export default function VideoProcessingView({
                 </div>
                 
                 <AccordionContent className="px-4 pb-4">
-                  <div className="ml-16 space-y-2 border-l pl-8">
+                  <div className="ml-16 space-y-2.5 border-l border-muted/30 pl-8">
                       {processingSteps.map((step, stepIndex) => {
                           const isStepDone = stepIndex < currentStep;
                           const isStepCurrent = stepIndex === currentStep && !isComplete;
                           return (
                               <div key={step} className="flex items-center gap-3 text-sm">
-                                  {isStepDone || isComplete ? (
-                                      <CheckCircle2 className="size-4 shrink-0 text-green-500" />
-                                  ) : isStepCurrent ? (
-                                      <Loader className="size-4 shrink-0 animate-spin text-primary" />
-                                  ) : (
-                                      <Circle className="size-4 shrink-0 text-muted-foreground" />
-                                  )}
-                                  <span className={cn('truncate', (isStepCurrent || isStepDone || isComplete) ? "text-foreground" : "text-muted-foreground")}>
+                                  <div className="shrink-0">
+                                    {isStepDone || isComplete ? (
+                                        <CompletedIcon />
+                                    ) : isStepCurrent ? (
+                                        <InProgressIcon />
+                                    ) : (
+                                        <PendingIcon />
+                                    )}
+                                  </div>
+                                  <span className={cn('truncate', 
+                                    isStepCurrent ? "text-foreground font-medium" : "text-muted-foreground"
+                                  )}>
                                       {step}
                                   </span>
                               </div>
