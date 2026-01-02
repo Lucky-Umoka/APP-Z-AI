@@ -52,8 +52,27 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
   return (
     <div className="relative w-full max-w-4xl mx-auto">
       <div className="relative p-4 pb-2">
-        <div className="group relative rounded-2xl p-px bg-border focus-within:bg-[conic-gradient(from_var(--angle),_transparent_0%,_var(--zuckky-green)_50%,_transparent_100%)] focus-within:[animation:border-flow_3s_linear_infinite]">
+        <div className="group relative rounded-2xl p-px bg-border focus-within:bg-[conic-gradient(from_var(--angle),_transparent_0%,_var(--zuckky-green)_50%,_transparent_100%)] focus-within:animate-border-flow">
           <div className="relative flex min-h-[52px] w-full items-center rounded-[15px] bg-input pl-4">
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground -ml-2"
+                            onClick={handleUploadClick}
+                            disabled={isLoading}
+                            aria-label="Upload Footage"
+                        >
+                            <Paperclip className="size-5" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Upload footage (video only)</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
             <Textarea
               placeholder="Give me instructions for your video..."
               value={message}
@@ -64,26 +83,6 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
               disabled={isLoading}
             />
             <div className="flex items-center gap-1 self-end p-2">
-              <TooltipProvider>
-                  <Tooltip>
-                      <TooltipTrigger asChild>
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                              onClick={handleUploadClick}
-                              disabled={isLoading}
-                              aria-label="Upload Footage"
-                          >
-                              <Paperclip className="size-5" />
-                          </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                          <p>Upload footage (video only)</p>
-                      </TooltipContent>
-                  </Tooltip>
-              </TooltipProvider>
-
               <Button
                 variant="ghost"
                 size="icon"

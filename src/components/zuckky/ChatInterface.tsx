@@ -87,7 +87,7 @@ export default function ChatInterface() {
   );
   
   return (
-    <div className="relative flex h-screen flex-col" onDragEnter={handleDragEnter}>
+    <div className="relative flex h-screen flex-col w-full" onDragEnter={handleDragEnter}>
       <div
         ref={scrollAreaRef}
         className="flex-1 overflow-y-auto"
