@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2, Circle, Loader, ChevronDown } from 'lucide-react';
+import { CheckCircle2, Circle, Loader } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -12,7 +12,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Button } from '../ui/button';
 
 interface VideoProcessingViewProps {
   videoUrl: string | null;
@@ -31,8 +30,6 @@ const processingSteps = [
   'Assigning a narrator',
   'Selecting the visuals',
 ];
-const TOTAL_STEPS = processingSteps.length;
-
 
 export default function VideoProcessingView({ videoUrl, progress, currentStep, onPreviewClick }: VideoProcessingViewProps) {
     const isComplete = progress >= 100;
@@ -41,69 +38,73 @@ export default function VideoProcessingView({ videoUrl, progress, currentStep, o
 
   return (
     <Card className="w-full max-w-2xl bg-card/50 shadow-inner hover:shadow-md transition-shadow duration-300">
-      <CardContent className="flex items-center gap-4 p-4">
-        {/* Video Thumbnail */}
-        <button 
-            onClick={onPreviewClick}
-            className="relative h-28 w-20 shrink-0 cursor-pointer overflow-hidden rounded-md transition-transform duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-            disabled={!isComplete}
-            aria-label="Open video preview"
-        >
-          <Image
-            src={videoUrl || imageData.imageUrl}
-            alt="Video thumbnail"
-            layout="fill"
-            className="object-cover"
-          />
-           {isComplete && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                <CheckCircle2 className="h-8 w-8 text-white" />
-            </div>
-           )}
-        </button>
+        <Accordion type="single" collapsible value={isOpen ? "item-1" : ""} onValueChange={(value) => setIsOpen(!!value)}>
+            <AccordionItem value="item-1" className="border-none">
+                <CardContent className="flex items-center gap-4 p-4">
+                    {/* Left Section: Progress */}
+                    <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="relative h-16 w-16">
+                            <svg className="h-full w-full" viewBox="0 0 36 36">
+                                <path
+                                    className="stroke-muted"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    strokeWidth="3"
+                                />
+                                <path
+                                    className="stroke-primary transition-all duration-500"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    strokeWidth="3"
+                                    strokeDasharray={`${progress}, 100`}
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
+                                {isComplete ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : `${Math.round(progress)}%`}
+                            </div>
+                        </div>
+                    </div>
 
-        {/* Middle Section: Progress */}
-        <div className="flex flex-1 flex-col items-center justify-center gap-2">
-            <div className="relative h-16 w-16">
-                <svg className="h-full w-full" viewBox="0 0 36 36">
-                    <path
-                        className="stroke-muted"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        fill="none"
-                        strokeWidth="3"
+                    {/* Middle Section: Main Text & Trigger */}
+                    <div className="flex-1">
+                         <AccordionTrigger className="p-0 hover:no-underline w-full">
+                            <div className='text-left'>
+                                <p className="text-base font-medium">
+                                    {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
+                                </p>
+                                <p className="text-sm text-muted-foreground">Click to {isOpen ? 'hide' : 'show'} details</p>
+                            </div>
+                        </AccordionTrigger>
+                    </div>
+
+                    {/* Right Section: Thumbnail */}
+                    <button 
+                        onClick={onPreviewClick}
+                        className="relative h-28 w-20 shrink-0 cursor-pointer overflow-hidden rounded-md transition-transform duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+                        disabled={!isComplete}
+                        aria-label="Open video preview"
+                    >
+                    <Image
+                        src={videoUrl || imageData.imageUrl}
+                        alt="Video thumbnail"
+                        layout="fill"
+                        className="object-cover"
                     />
-                    <path
-                        className="stroke-primary transition-all duration-500"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        fill="none"
-                        strokeWidth="3"
-                        strokeDasharray={`${progress}, 100`}
-                    />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
-                    {isComplete ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : `${Math.round(progress)}%`}
-                </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-                {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
-            </p>
-        </div>
-
-
-        {/* Right Section: Steps */}
-        <div className="w-56 shrink-0 text-sm">
-            <Accordion type="single" collapsible value={isOpen ? "item-1" : ""} onValueChange={(value) => setIsOpen(!!value)}>
-              <AccordionItem value="item-1" className="border-none">
-                <AccordionTrigger className="p-0 hover:no-underline justify-start gap-1 text-xs font-semibold uppercase text-muted-foreground">
-                    <span>{isOpen ? 'Hide' : 'Show'} details</span>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2">
-                  <div className="space-y-1.5">
+                    {isComplete && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                            <CheckCircle2 className="h-8 w-8 text-white" />
+                        </div>
+                    )}
+                    </button>
+                </CardContent>
+                
+                <AccordionContent className="px-4 pb-4">
+                  <div className="ml-24 space-y-2 border-l pl-6">
                       {processingSteps.map((step, stepIndex) => {
                           const isStepDone = stepIndex < currentStep;
                           const isStepCurrent = stepIndex === currentStep && !isComplete;
                           return (
-                              <div key={step} className="flex items-center gap-2">
+                              <div key={step} className="flex items-center gap-3 text-sm">
                                   {isStepDone || isComplete ? (
                                       <CheckCircle2 className="size-4 shrink-0 text-green-500" />
                                   ) : isStepCurrent ? (
@@ -119,10 +120,8 @@ export default function VideoProcessingView({ videoUrl, progress, currentStep, o
                       })}
                   </div>
                 </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-        </div>
-      </CardContent>
+            </AccordionItem>
+        </Accordion>
     </Card>
   );
 }
