@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -27,7 +28,6 @@ const processingSteps = [
     'Selecting the visuals',
 ];
 
-// Custom SVG Icons to match the screenshot
 const CompletedIcon = () => (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="8" cy="8" r="8" fill="#10B981"/>
@@ -70,55 +70,57 @@ export default function VideoProcessingView({
             onValueChange={(value) => setIsCollapsibleOpen(!!value)}
         >
             <AccordionItem value="item-1" className="border-none">
-                <div className="flex items-center gap-4 p-4">
-                    {/* Left Section: Progress */}
-                    <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="relative h-12 w-12">
-                            <svg className="h-full w-full" viewBox="0 0 36 36">
-                                <path
-                                    className="stroke-muted/30"
-                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                    fill="none"
-                                    strokeWidth="3"
-                                />
-                                <path
-                                    className="stroke-primary transition-all duration-500"
-                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                    fill="none"
-                                    strokeWidth="3"
-                                    strokeDasharray={`${progress}, 100`}
-                                />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-foreground">
-                                {isComplete ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : `${Math.round(progress)}%`}
+                <AccordionTrigger className="p-4 hover:no-underline w-full justify-start text-sm text-muted-foreground data-[state=open]:border-b data-[state=open]:border-border">
+                    <div className="flex items-center gap-4 w-full">
+                        {/* Left Section: Progress */}
+                        <div className="flex flex-col items-center justify-center gap-2">
+                            <div className="relative h-12 w-12">
+                                <svg className="h-full w-full" viewBox="0 0 36 36">
+                                    <path
+                                        className="stroke-muted/30"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                        fill="none"
+                                        strokeWidth="3"
+                                    />
+                                    <path
+                                        className="stroke-primary transition-all duration-500"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                        fill="none"
+                                        strokeWidth="3"
+                                        strokeDasharray={`${progress}, 100`}
+                                    />
+                                </svg>
+                                <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-foreground">
+                                    {isComplete ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : `${Math.round(progress)}%`}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Middle Section: Main Text & Trigger */}
-                    <div className="flex-1">
-                        <p className="text-base font-medium">
-                            {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
-                        </p>
-                         <AccordionTrigger className="p-0 hover:no-underline w-full justify-start gap-1 text-sm text-muted-foreground mt-1">
-                            <span>Reasoning</span>
-                            <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
-                        </AccordionTrigger>
-                    </div>
+                        {/* Middle Section: Main Text */}
+                        <div className="flex-1 text-left">
+                            <p className="text-base font-medium text-foreground">
+                                {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
+                            </p>
+                            <span className="text-sm text-muted-foreground mt-1">Reasoning</span>
+                        </div>
 
-                    {/* Right Section: Thumbnail */}
-                    <button 
-                        onClick={onPreviewClick}
-                        className={cn(
-                            "relative h-16 w-28 shrink-0 flex items-center justify-center bg-black/80 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
-                            isComplete ? "cursor-pointer hover:scale-[1.02]" : "cursor-default"
-                        )}
-                        disabled={!isComplete}
-                        aria-label="Open video preview"
-                    >
-                        <PlayCircle className={cn("size-8 text-white/50 transition-colors", isComplete && "text-white")}/>
-                    </button>
-                </div>
+                        {/* Right Section: Thumbnail */}
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (isComplete) onPreviewClick();
+                            }}
+                            className={cn(
+                                "relative h-16 w-28 shrink-0 flex items-center justify-center bg-black/80 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
+                                isComplete ? "cursor-pointer hover:scale-[1.02]" : "cursor-default"
+                            )}
+                            disabled={!isComplete}
+                            aria-label="Open video preview"
+                        >
+                            <PlayCircle className={cn("size-8 text-white/50 transition-colors", isComplete && "text-white")}/>
+                        </button>
+                    </div>
+                </AccordionTrigger>
                 
                 <AccordionContent className="px-4 pb-4">
                   <div className="ml-16 space-y-2.5 border-l border-muted/30 pl-8">

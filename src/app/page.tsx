@@ -11,12 +11,16 @@ import PreviewCanvas from '@/components/zuckky/PreviewCanvas';
 import { DragEvent, useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import Logo from '@/components/zuckky/Logo';
 
 const Welcome = () => {
     const { sendMessage } = useConversation();
     return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] w-full max-w-2xl text-center px-6">
-            <h1 className="text-4xl font-bold tracking-tight">Welcome to Zuckky AI</h1>
+            <div className="flex items-center gap-3 mb-4">
+              <Logo className="h-10 w-10 text-primary" />
+              <h1 className="text-4xl font-bold tracking-tight">Welcome to Zuckky AI</h1>
+            </div>
             <p className="mb-8 mt-2 text-lg text-muted-foreground">Start editing by giving an instruction or uploading footage.</p>
             <div className="mx-auto grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <SuggestionPill icon={<MessageSquare />} text="What styles of videos can you edit?" onClick={() => sendMessage("What styles of videos can you edit?")} />
@@ -113,9 +117,6 @@ export default function Home() {
       }, []);
 
       useEffect(() => {
-        // This ensures we scroll to the bottom every time messages change.
-        // The timeout pushes the execution to the end of the event loop,
-        // ensuring the DOM is updated before we try to scroll.
         if (messages.length > 0) {
             const timer = setTimeout(() => {
                 scrollToBottom();
@@ -132,7 +133,7 @@ export default function Home() {
         <main ref={scrollAreaRef} className="flex-1 flex flex-col items-center relative overflow-y-auto">
             <div className="w-full max-w-3xl flex-1 flex flex-col">
                 {messages.length === 0 ? (
-                  <div className={cn("animate-out slide-out-to-top duration-700", messages.length > 0 ? "hidden" : "block")}>
+                  <div className={cn("animate-in fade-in duration-700", messages.length > 0 ? "hidden" : "block")}>
                     <Welcome />
                   </div>
                 ) : (
