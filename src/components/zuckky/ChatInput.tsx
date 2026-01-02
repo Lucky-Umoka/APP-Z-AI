@@ -52,37 +52,37 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
   return (
     <div className="relative w-full max-w-4xl mx-auto">
       <div className="relative p-4 pb-2">
-        <div className="group relative rounded-2xl p-px bg-border focus-within:bg-[conic-gradient(from_var(--angle),_transparent_0%,_var(--zuckky-green)_50%,_transparent_100%)] focus-within:animate-border-flow">
-          <div className="relative flex min-h-[52px] w-full items-center rounded-[15px] bg-input pl-4">
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground -ml-2"
-                            onClick={handleUploadClick}
-                            disabled={isLoading}
-                            aria-label="Upload Footage"
-                        >
-                            <Paperclip className="size-5" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Upload footage (video only)</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+        <div className="group relative rounded-2xl bg-border p-px focus-within:bg-[conic-gradient(from_var(--angle),_transparent_0%,_var(--zuckky-green)_50%,_transparent_100%)] focus-within:animate-border-flow">
+          <div className="relative flex w-full flex-col rounded-[15px] bg-input">
             <Textarea
               placeholder="Give me instructions for your video..."
               value={message}
               onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
               rows={1}
-              className="h-auto max-h-48 flex-1 resize-none self-center border-none bg-transparent py-2.5 text-base shadow-none ring-offset-transparent placeholder:text-muted-foreground/80 focus-visible:ring-0"
+              className="h-auto max-h-48 min-h-[52px] flex-1 resize-none self-center border-none bg-transparent px-4 py-3.5 text-base shadow-none ring-offset-transparent placeholder:text-muted-foreground/80 focus-visible:ring-0"
               disabled={isLoading}
             />
-            <div className="flex items-center gap-1 self-end p-2">
+            <div className="flex items-center justify-between p-2">
+              <TooltipProvider>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                              onClick={handleUploadClick}
+                              disabled={isLoading}
+                              aria-label="Upload Footage"
+                          >
+                              <Paperclip className="size-5" />
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                          <p>Upload footage (video only)</p>
+                      </TooltipContent>
+                  </Tooltip>
+              </TooltipProvider>
               <Button
                 variant="ghost"
                 size="icon"
