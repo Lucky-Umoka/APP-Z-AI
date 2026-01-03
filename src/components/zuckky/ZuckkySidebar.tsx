@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/sidebar';
 import { MessageSquarePlus, MessageSquareText, Settings2 } from 'lucide-react';
 import { UserProfile } from './UserProfile';
-import LogoIcon from './LogoIcon';
+import Logo from './Logo';
 
 export function ZuckkySidebar() {
   return (
@@ -21,7 +21,7 @@ export function ZuckkySidebar() {
       <SidebarHeader className="p-2">
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center gap-2 overflow-hidden">
-            <LogoIcon className="h-7 w-7 shrink-0" />
+            <Logo className="h-7 w-7 shrink-0" />
             <span className="truncate text-lg font-semibold group-data-[collapsible=icon]:hidden">
               Zuckky
             </span>

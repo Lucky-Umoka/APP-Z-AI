@@ -10,7 +10,7 @@ import SummaryCard from './SummaryCard';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { ThumbsUp, ThumbsDown, FileVideo } from 'lucide-react';
-import LogoIcon from './LogoIcon';
+import Logo from './Logo';
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -49,7 +49,7 @@ export default function ChatMessages({ messages, conversationStep, onTemplateSel
         >
           {message.role === 'assistant' && (
             <Avatar className="h-8 w-8 border-none bg-transparent flex items-center justify-center">
-               <LogoIcon className="h-full w-full" />
+               <Logo className="h-full w-full" />
             </Avatar>
           )}
 
