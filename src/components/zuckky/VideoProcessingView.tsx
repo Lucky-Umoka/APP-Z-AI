@@ -144,7 +144,7 @@ export default function VideoProcessingView({
                         >
                              <div className="flex flex-col items-start gap-1 text-left">
                                 <p className="text-base font-medium text-foreground">
-                                    {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
+                                    {isComplete ? 'Your video is ready' : 'Our Video Agent is working on your video...'}
                                 </p>
                                 {showDetails && !isComplete && (
                                     <span className="text-sm text-muted-foreground mt-1 flex items-center">
