@@ -75,8 +75,8 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
 
   return (
     <div className="w-full">
-        <div className={cn('relative w-full rounded-2xl bg-card border-2 border-border transition-all duration-700 focus-within:border-transparent focus-within:p-px focus-within:bg-gradient-to-r focus-within:from-[#00ff87] focus-within:via-[#60efff] focus-within:to-[#0099ff] focus-within:animate-border-flow', file ? 'mb-2' : '')}>
-          <div className="relative w-full rounded-xl bg-card">
+        <div className={cn('relative w-full rounded-2xl bg-card border-2 border-border transition-all duration-700', isFocused ? 'border-transparent p-px bg-gradient-to-r from-[#00ff87] via-[#60efff] to-[#0099ff] animate-border-flow' : '')}>
+          <div className={cn("relative w-full bg-card", isFocused ? 'rounded-[14px]' : 'rounded-2xl')}>
             {file && (
             <div className="p-3 border-b border-border">
                 <div className="relative flex items-center gap-3 p-2 rounded-lg bg-background w-fit">
