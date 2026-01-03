@@ -90,3 +90,10 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+@layer utilities {
+    /* To fix the white blink on chat input focus */
+    textarea.px-12:focus {
+        outline: none !important;
+    }
+}
