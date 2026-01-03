@@ -74,7 +74,7 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
 
   return (
     <div className="w-full">
-      <Card className={cn('w-full rounded-2xl bg-card transition-all', file ? 'mb-2' : '')}>
+      <Card className={cn('w-full rounded-2xl bg-card transition-all focus-within:ring-0', file ? 'mb-2' : '')}>
         {file && (
           <div className="p-3 border-b border-border">
               <div className="relative flex items-center gap-3 p-2 rounded-lg bg-background w-fit">
