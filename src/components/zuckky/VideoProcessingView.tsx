@@ -47,6 +47,19 @@ const PendingIcon = () => (
     </svg>
 );
 
+const EditingDots = () => {
+    const [dots, setDots] = useState('');
+  
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setDots(prev => (prev.length >= 3 ? '' : prev + '.'));
+      }, 500);
+      return () => clearInterval(interval);
+    }, []);
+  
+    return <span>{dots}</span>;
+};
+
 
 export default function VideoProcessingView({ 
     progress, 
@@ -55,11 +68,21 @@ export default function VideoProcessingView({
     isCollapsibleOpen: isCollapsibleOpenProp = true
 }: VideoProcessingViewProps) {
     const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(isCollapsibleOpenProp);
+    const [showDetails, setShowDetails] = useState(true);
     const isComplete = progress >= 100;
 
     useEffect(() => {
         setIsCollapsibleOpen(isCollapsibleOpenProp);
     }, [isCollapsibleOpenProp]);
+    
+    useEffect(() => {
+        if (isComplete) {
+            const timer = setTimeout(() => {
+                setShowDetails(false);
+            }, 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [isComplete]);
 
   return (
     <Card className="w-full max-w-2xl bg-card/50 shadow-inner hover:shadow-md transition-shadow duration-300">
@@ -70,87 +93,88 @@ export default function VideoProcessingView({
             onValueChange={(value) => setIsCollapsibleOpen(!!value)}
         >
             <AccordionItem value="item-1" className="border-none">
-                <div className={cn("p-4 w-full text-sm data-[state=open]:border-b data-[state=open]:border-border", isCollapsibleOpen && "border-b border-border")}>
-                    <AccordionTrigger className="p-0 hover:no-underline flex justify-start items-center gap-4">
-                        {/* Left Section: Progress */}
-                        <div className="flex flex-col items-center justify-center">
-                            <div className="relative h-12 w-12">
-                                <svg className="h-full w-full" viewBox="0 0 36 36">
-                                    <path
-                                        className="stroke-muted/30"
-                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                        fill="none"
-                                        strokeWidth="3"
-                                    />
-                                    <path
-                                        className="stroke-primary transition-all duration-500"
-                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                        fill="none"
-                                        strokeWidth="3"
-                                        strokeDasharray={`${progress}, 100`}
-                                    />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-foreground">
-                                    {isComplete ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : `${Math.round(progress)}%`}
+                <div className={cn("p-4 w-full text-sm", (isCollapsibleOpen && showDetails) && "border-b border-border")}>
+                    <div className="flex justify-between items-center gap-4">
+                        {/* Left Section: Video Preview */}
+                        <div 
+                            onClick={() => {
+                                if (isComplete) onPreviewClick();
+                            }}
+                            className={cn(
+                                "relative h-16 w-28 shrink-0 flex items-center justify-center bg-black/80 rounded-md transition-all duration-200 focus:outline-none",
+                                isComplete ? "cursor-pointer hover:scale-[1.02] focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background" : "cursor-default"
+                            )}
+                            aria-disabled={!isComplete}
+                            aria-label="Open video preview"
+                        >
+                            {isComplete ? (
+                                <PlayCircle className="size-8 text-white" />
+                            ) : (
+                                <div className="relative h-12 w-12">
+                                    <svg className="h-full w-full" viewBox="0 0 36 36">
+                                        <path
+                                            className="stroke-muted/30"
+                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            fill="none"
+                                            strokeWidth="3"
+                                        />
+                                        <path
+                                            className="stroke-primary transition-all duration-500"
+                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            fill="none"
+                                            strokeWidth="3"
+                                            strokeDasharray={`${progress}, 100`}
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-foreground">
+                                        {`${Math.round(progress)}%`}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
-                        {/* Middle Section: Main Text */}
-                        <div className="flex-1 text-left">
+                        {/* Middle Section: Main Text & Trigger */}
+                        <AccordionTrigger className="flex-1 p-0 hover:no-underline flex flex-col items-start gap-1">
                             <p className="text-base font-medium text-foreground">
                                 {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
                             </p>
-                            <span className="text-sm text-muted-foreground mt-1">Reasoning</span>
-                        </div>
-                        
-                        {/* Right Section: Thumbnail and Toggle */}
-                        <div className="flex items-center gap-4">
-                            <button 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isComplete) onPreviewClick();
-                                }}
-                                className={cn(
-                                    "relative h-16 w-28 shrink-0 flex items-center justify-center bg-black/80 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
-                                    isComplete ? "cursor-pointer hover:scale-[1.02]" : "cursor-default"
-                                )}
-                                disabled={!isComplete}
-                                aria-label="Open video preview"
-                            >
-                                <PlayCircle className={cn("size-8 text-white/50 transition-colors", isComplete && "text-white")}/>
-                            </button>
-                            {/* The AccordionTrigger will render its own chevron, so we don't need a manual one */}
-                        </div>
-                    </AccordionTrigger>
+                            {showDetails && (
+                                <span className="text-sm text-muted-foreground mt-1 flex items-center">
+                                    Editing<EditingDots />
+                                </span>
+                            )}
+                        </AccordionTrigger>
+                    </div>
                 </div>
                 
-                <AccordionContent className="px-4 pb-4">
-                  <div className="ml-16 space-y-2.5 border-l border-muted/30 pl-8 pt-4">
-                      {processingSteps.map((step, stepIndex) => {
-                          const isStepDone = stepIndex < currentStep;
-                          const isStepCurrent = stepIndex === currentStep && !isComplete;
-                          return (
-                              <div key={step} className="flex items-center gap-3 text-sm">
-                                  <div className="shrink-0">
-                                    {isStepDone || isComplete ? (
-                                        <CompletedIcon />
-                                    ) : isStepCurrent ? (
-                                        <InProgressIcon />
-                                    ) : (
-                                        <PendingIcon />
-                                    )}
+                {showDetails && (
+                    <AccordionContent className="px-4 pb-4">
+                      <div className="ml-8 space-y-2.5 border-l border-muted/30 pl-8 pt-4">
+                          {processingSteps.map((step, stepIndex) => {
+                              const isStepDone = stepIndex < currentStep;
+                              const isStepCurrent = stepIndex === currentStep && !isComplete;
+                              return (
+                                  <div key={step} className="flex items-center gap-3 text-sm">
+                                      <div className="shrink-0">
+                                        {isStepDone || isComplete ? (
+                                            <CompletedIcon />
+                                        ) : isStepCurrent ? (
+                                            <InProgressIcon />
+                                        ) : (
+                                            <PendingIcon />
+                                        )}
+                                      </div>
+                                      <span className={cn('truncate', 
+                                        isStepCurrent ? "text-foreground font-medium" : "text-muted-foreground"
+                                      )}>
+                                          {step}
+                                      </span>
                                   </div>
-                                  <span className={cn('truncate', 
-                                    isStepCurrent ? "text-foreground font-medium" : "text-muted-foreground"
-                                  )}>
-                                      {step}
-                                  </span>
-                              </div>
-                          );
-                      })}
-                  </div>
-                </AccordionContent>
+                              );
+                          })}
+                      </div>
+                    </AccordionContent>
+                )}
             </AccordionItem>
         </Accordion>
     </Card>

@@ -93,8 +93,8 @@ export function useConversation() {
 
   const sendMessage = useCallback(async (message: string, file?: File) => {
     setIsLoading(true);
-    // Only add user message if it's the start of the conversation or has content
-    if (messages.length > 0 || message || file) {
+    // Only add user message if it has content or a file
+    if (message.trim() || file) {
         addMessage({ role: 'user', content: file ? `Uploaded: ${file.name}` : message });
     }
     
@@ -102,14 +102,24 @@ export function useConversation() {
 
     switch (conversationStep) {
         case ConversationStep.WELCOME:
-        case ConversationStep.AWAITING_VIDEO:
             if (file) {
                 setEditingDetails(prev => ({ ...prev, videoFile: file }));
                 addMessage({ role: 'assistant', content: `Great, your footage is uploaded. Now, please select an editing style for your video.`, type: 'template-selection' });
                 setConversationStep(ConversationStep.AWAITING_TEMPLATE);
             } else {
-                setEditingDetails(prev => ({ ...prev, instructions: message }));
                 addMessage({ role: 'assistant', content: `Hi, I'm Zuckky AI, here to help you edit your videos to go viral. To get started, please give me some instructions or upload your footage.` });
+                setConversationStep(ConversationStep.AWAITING_VIDEO);
+            }
+            break;
+        
+        case ConversationStep.AWAITING_VIDEO:
+            if (file) {
+                setEditingDetails(prev => ({ ...prev, videoFile: file, instructions: message }));
+                addMessage({ role: 'assistant', content: `Great, your footage is uploaded. Now, please select an editing style for your video.`, type: 'template-selection' });
+                setConversationStep(ConversationStep.AWAITING_TEMPLATE);
+            } else {
+                setEditingDetails(prev => ({ ...prev, instructions: message }));
+                addMessage({ role: 'assistant', content: `I have your instructions. Please upload your footage to continue.` });
                 setConversationStep(ConversationStep.AWAITING_VIDEO);
             }
             break;
@@ -218,7 +228,7 @@ export function useConversation() {
                         shouldClear = true;
                         return {
                             ...msg,
-                            processingState: { ...msg.processingState, progress: 100, isCollapsibleOpen: false }
+                            processingState: { ...msg.processingState, progress: 100 }
                         };
                     }
                     const newProgress = (nextStep / TOTAL_PROCESSING_STEPS) * 100;
@@ -236,11 +246,19 @@ export function useConversation() {
             clearInterval(interval);
             setIsLoading(false);
             setEditingDetails(prev => ({...prev, editedVideoUrl: videoUrl }));
+
+            // Post-completion sequence
             setTimeout(() => {
-                setCanvasOpen(true);
+                // This triggers the view to hide details
+                updateMessage(processingMessageId, { processingState: { ...initialState, videoUrl, progress: 100, isCollapsibleOpen: false }});
+                
+                // Wait another 1.5s before opening canvas
+                setTimeout(() => {
+                    setCanvasOpen(true);
+                    setConversationStep(ConversationStep.DONE);
+                    addMessage({ role: 'assistant', content: 'Your video is ready. Let me know if you would like any changes or want to start a new project.' });
+                }, 1500);
             }, 1500);
-            setConversationStep(ConversationStep.DONE);
-            addMessage({ role: 'assistant', content: 'Your video is ready. Let me know if you would like any changes or want to start a new project.' });
         }
       }, PROCESSING_STEP_DURATION);
   
