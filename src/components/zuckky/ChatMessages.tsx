@@ -49,6 +49,7 @@ export default function ChatMessages({ messages, conversationStep, onTemplateSel
         >
           {message.role === 'assistant' && (
             <Avatar className="h-8 w-8 border border-primary/20">
+              <AvatarImage src="/logo.png" alt="Zuckky AI Avatar" />
               <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/50 text-primary">
                 <Logo className="h-5 w-5" />
               </AvatarFallback>
