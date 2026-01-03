@@ -70,10 +70,10 @@ export default function VideoProcessingView({
             onValueChange={(value) => setIsCollapsibleOpen(!!value)}
         >
             <AccordionItem value="item-1" className="border-none">
-                <AccordionTrigger className="p-4 hover:no-underline w-full justify-start text-sm text-muted-foreground data-[state=open]:border-b data-[state=open]:border-border">
-                    <div className="flex items-center gap-4 w-full">
+                <div className={cn("p-4 w-full text-sm data-[state=open]:border-b data-[state=open]:border-border", isCollapsibleOpen && "border-b border-border")}>
+                    <AccordionTrigger className="p-0 hover:no-underline flex justify-start items-center gap-4">
                         {/* Left Section: Progress */}
-                        <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="flex flex-col items-center justify-center">
                             <div className="relative h-12 w-12">
                                 <svg className="h-full w-full" viewBox="0 0 36 36">
                                     <path
@@ -103,27 +103,30 @@ export default function VideoProcessingView({
                             </p>
                             <span className="text-sm text-muted-foreground mt-1">Reasoning</span>
                         </div>
-
-                        {/* Right Section: Thumbnail */}
-                        <button 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (isComplete) onPreviewClick();
-                            }}
-                            className={cn(
-                                "relative h-16 w-28 shrink-0 flex items-center justify-center bg-black/80 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
-                                isComplete ? "cursor-pointer hover:scale-[1.02]" : "cursor-default"
-                            )}
-                            disabled={!isComplete}
-                            aria-label="Open video preview"
-                        >
-                            <PlayCircle className={cn("size-8 text-white/50 transition-colors", isComplete && "text-white")}/>
-                        </button>
-                    </div>
-                </AccordionTrigger>
+                        
+                        {/* Right Section: Thumbnail and Toggle */}
+                        <div className="flex items-center gap-4">
+                            <button 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (isComplete) onPreviewClick();
+                                }}
+                                className={cn(
+                                    "relative h-16 w-28 shrink-0 flex items-center justify-center bg-black/80 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
+                                    isComplete ? "cursor-pointer hover:scale-[1.02]" : "cursor-default"
+                                )}
+                                disabled={!isComplete}
+                                aria-label="Open video preview"
+                            >
+                                <PlayCircle className={cn("size-8 text-white/50 transition-colors", isComplete && "text-white")}/>
+                            </button>
+                            {/* The AccordionTrigger will render its own chevron, so we don't need a manual one */}
+                        </div>
+                    </AccordionTrigger>
+                </div>
                 
                 <AccordionContent className="px-4 pb-4">
-                  <div className="ml-16 space-y-2.5 border-l border-muted/30 pl-8">
+                  <div className="ml-16 space-y-2.5 border-l border-muted/30 pl-8 pt-4">
                       {processingSteps.map((step, stepIndex) => {
                           const isStepDone = stepIndex < currentStep;
                           const isStepCurrent = stepIndex === currentStep && !isComplete;
