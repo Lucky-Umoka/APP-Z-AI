@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { CheckCircle2, Circle, Loader, PlayCircle, ChevronDown } from 'lucide-react';
+import { PlayCircle, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -30,20 +30,21 @@ const processingSteps = [
 
 const CompletedIcon = () => (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="8" cy="8" r="8" fill="#10B981"/>
-        <path d="M5 8.5L7.5 11L11.5 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="8" cy="8" r="8" fill="hsl(var(--primary))"/>
+        <path d="M5 8.5L7.5 11L11.5 6" stroke="hsl(var(--primary-foreground))" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
 
 const InProgressIcon = () => (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="animate-spin">
-        <path d="M8 1.5C4.41015 1.5 1.5 4.41015 1.5 8C1.5 11.5898 4.41015 14.5 8 14.5C11.5898 14.5 14.5 11.5898 14.5 8" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M8 1.5C4.41015 1.5 1.5 4.41015 1.5 8C1.5 11.5898 4.41015 14.5 8 14.5C11.5898 14.5 14.5 11.5898 14.5 8" stroke="hsl(var(--primary))" strokeOpacity="0.5" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M8 1.5C4.41015 1.5 1.5 4.41015 1.5 8" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round"/>
     </svg>
 );
 
 const PendingIcon = () => (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="8" cy="8" r="7.5" stroke="#4B5563"/>
+        <circle cx="8" cy="8" r="7.5" stroke="hsl(var(--border))"/>
     </svg>
 );
 
@@ -134,18 +135,23 @@ export default function VideoProcessingView({
                         </div>
 
                         {/* Middle Section: Main Text & Trigger */}
-                        <AccordionTrigger className="flex-1 p-0 hover:no-underline flex justify-between items-center">
-                            <div className="flex flex-col items-start gap-1">
+                        <AccordionTrigger 
+                            className="flex-1 p-0 hover:no-underline flex justify-between items-center"
+                            disabled={isComplete}
+                        >
+                             <div className="flex flex-col items-start gap-1">
                                 <p className="text-base font-medium text-foreground">
                                     {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
                                 </p>
-                                {showDetails && (
+                                {showDetails && !isComplete && (
                                     <span className="text-sm text-muted-foreground mt-1 flex items-center">
                                         Editing<EditingDots />
                                     </span>
                                 )}
                             </div>
-                            {!isComplete && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
+                            {!isComplete && (
+                                <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 text-muted-foreground group-data-[state=open]:rotate-180" />
+                            )}
                         </AccordionTrigger>
                     </div>
                 </div>
