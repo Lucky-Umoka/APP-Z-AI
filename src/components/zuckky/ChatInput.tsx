@@ -77,11 +77,11 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
         <div className="relative w-full rounded-2xl">
             <div 
                 className={cn(
-                    'absolute -inset-px rounded-2xl bg-gradient-to-r from-[#58CC02] via-[#00C0FF] to-[#58CC02] bg-[length:200%_auto] animate-border-flow transition-opacity duration-700',
+                    'absolute -inset-px rounded-2xl bg-gradient-to-r from-[#58CC02] via-[#00C0FF] to-[#58CC02] bg-[length:200%_auto] animate-border-flow p-px transition-opacity duration-700',
                     isFocused ? 'opacity-100' : 'opacity-0'
                 )}
             />
-            <div className="relative w-full rounded-2xl bg-card">
+            <div className="relative w-full rounded-[15px] bg-card">
                 {file && (
                 <div className="p-3 border-b border-border">
                     <div className="relative flex items-center gap-3 p-2 rounded-lg bg-background w-fit">
