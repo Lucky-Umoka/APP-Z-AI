@@ -125,7 +125,7 @@ export default function Home() {
     <SidebarProvider>
       <div className="flex h-screen w-full" onDragEnter={handleDragEnter}>
         <ZuckkySidebar />
-        <main ref={scrollAreaRef} className={cn("flex-1 flex flex-col items-center relative overflow-y-auto", messages.length === 0 && "justify-center")}>
+        <main ref={scrollAreaRef} className={cn("flex-1 flex flex-col items-center relative overflow-y-auto bg-black", messages.length === 0 && "justify-center")}>
             
             {messages.length === 0 ? (
                 <div className="w-full max-w-3xl flex-1 flex flex-col justify-center items-center">
@@ -154,7 +154,7 @@ export default function Home() {
                       />
                      </div>
                    </div>
-                   <div className="sticky bottom-0 w-full max-w-3xl px-4 pb-4 bg-gradient-to-t from-background via-background/80 to-transparent">
+                   <div className="sticky bottom-0 w-full max-w-3xl px-4 pb-4 bg-gradient-to-t from-black via-black/80 to-transparent">
                        <ChatInput ref={chatInputRef} onSendMessage={sendMessage} isLoading={isLoading}/>
                    </div>
                 </>
@@ -173,7 +173,7 @@ export default function Home() {
             
             {isDragging && (
                 <div
-                className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in zoom-in-95 duration-300"
+                className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in zoom-in-95 duration-300"
                 onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
