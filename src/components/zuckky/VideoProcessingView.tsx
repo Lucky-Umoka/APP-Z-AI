@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { PlayCircle, ChevronDown } from 'lucide-react';
+import { PlayCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -149,9 +149,6 @@ export default function VideoProcessingView({
                                     </span>
                                 )}
                             </div>
-                            {!isComplete && (
-                                <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 text-muted-foreground group-data-[state=open]:rotate-180" />
-                            )}
                         </AccordionTrigger>
                     </div>
                 </div>
