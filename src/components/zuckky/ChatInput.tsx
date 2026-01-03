@@ -74,72 +74,86 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
 
   return (
     <div className="w-full">
-      <Card className={cn('w-full rounded-2xl bg-card transition-all focus-within:ring-0', file ? 'mb-2' : '')}>
-        {file && (
-          <div className="p-3 border-b border-border">
-              <div className="relative flex items-center gap-3 p-2 rounded-lg bg-background w-fit">
-                <FileVideo className="h-6 w-6 text-muted-foreground" />
-                <div className="text-sm">
-                    <div className="font-medium truncate max-w-xs">{file.name}</div>
-                    <div className="text-muted-foreground">{Math.round(file.size / 1024)} KB</div>
-                </div>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-muted text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={removeFile}
-                >
-                    <X className="h-4 w-4" />
-                </Button>
-              </div>
-          </div>
+        <div 
+        className={cn(
+            'relative rounded-2xl p-px group',
+            'focus-within:bg-gradient-to-r focus-within:from-green-400 focus-within:to-blue-500'
         )}
-        <div className="relative">
-            <Textarea
-              ref={textareaRef}
-              placeholder="Give me instructions for your video..."
-              value={message}
-              onChange={handleTextareaChange}
-              onKeyDown={handleKeyDown}
-              rows={1}
-              className="h-auto max-h-48 min-h-[52px] w-full resize-none border-none bg-transparent px-12 py-3.5 text-base shadow-none ring-offset-transparent placeholder:text-muted-foreground/80 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200"
-              disabled={isLoading}
-            />
-            <div className="absolute bottom-3 left-3 flex items-center">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+        >
+        <Card className={cn(
+          'w-full rounded-[15px] bg-card transition-all relative',
+          'before:absolute before:inset-0 before:rounded-[15px] before:p-px before:bg-[conic-gradient(from_var(--angle),_#00C2FF_0%,_#39FF14_30%,_#00C2FF_60%)]',
+          'before:opacity-0 focus-within:before:opacity-100 before:transition-opacity before:duration-500 before:animate-border-flow',
+          file ? 'mb-2' : ''
+        )}>
+            <div className="relative bg-card rounded-[14px]">
+                {file && (
+                <div className="p-3 border-b border-border">
+                    <div className="relative flex items-center gap-3 p-2 rounded-lg bg-background w-fit">
+                        <FileVideo className="h-6 w-6 text-muted-foreground" />
+                        <div className="text-sm">
+                            <div className="font-medium truncate max-w-xs">{file.name}</div>
+                            <div className="text-muted-foreground">{Math.round(file.size / 1024)} KB</div>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-muted text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={removeFile}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+                )}
+                <div className="relative">
+                    <Textarea
+                    ref={textareaRef}
+                    placeholder="Give me instructions for your video..."
+                    value={message}
+                    onChange={handleTextareaChange}
+                    onKeyDown={handleKeyDown}
+                    rows={1}
+                    className="h-auto max-h-48 min-h-[52px] w-full resize-none border-none bg-transparent px-12 py-3.5 text-base shadow-none ring-offset-transparent placeholder:text-muted-foreground/80 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200"
+                    disabled={isLoading}
+                    />
+                    <div className="absolute bottom-3 left-3 flex items-center">
+                    <TooltipProvider>
+                        <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-all duration-200 hover:scale-105 active:scale-95"
+                            onClick={handleUploadClick}
+                            disabled={isLoading}
+                            aria-label="Upload Footage"
+                            >
+                            <Paperclip className="size-5" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Upload footage (video only)</p>
+                        </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    </div>
+                    <div className="absolute bottom-3 right-3 flex items-center">
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-all duration-200 hover:scale-105 active:scale-95"
-                      onClick={handleUploadClick}
-                      disabled={isLoading}
-                      aria-label="Upload Footage"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:bg-accent/50 hover:text-foreground disabled:bg-transparent transition-all duration-200 hover:scale-105 active:scale-95"
+                        onClick={handleSendMessage}
+                        disabled={isLoading || (!message.trim() && !file)}
+                        aria-label="Send Message"
                     >
-                      <Paperclip className="size-5" />
+                        <Send className="size-5" />
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Upload footage (video only)</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                    </div>
+                </div>
             </div>
-            <div className="absolute bottom-3 right-3 flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:bg-accent/50 hover:text-foreground disabled:bg-transparent transition-all duration-200 hover:scale-105 active:scale-95"
-                onClick={handleSendMessage}
-                disabled={isLoading || (!message.trim() && !file)}
-                aria-label="Send Message"
-              >
-                <Send className="size-5" />
-              </Button>
-            </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
       <p className="mt-2 text-center text-xs text-muted-foreground">
         Zuckky can make mistakes. Consider checking important information.
       </p>
