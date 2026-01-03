@@ -81,8 +81,10 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
         )}
         >
         <Card className={cn(
-          'w-full rounded-[15px] bg-card transition-all relative before:absolute before:inset-0 before:rounded-[15px] before:p-px before:bg-[conic-gradient(from_var(--angle),_#00C2FF_0%,_#39FF14_30%,_#00C2FF_60%)] before:content-[\'\']',
-          'before:opacity-0 focus-within:before:opacity-100 before:transition-opacity before:duration-500 focus-within:before:animate-border-flow'
+          'w-full rounded-[15px] bg-card transition-all relative',
+          'bg-[length:200%_200%] bg-center focus-within:bg-[length:100%_100%] focus-within:animate-border-flow',
+          'bg-[linear-gradient(theme(colors.card),theme(colors.card)),linear-gradient(90deg,#00C2FF_0%,#39FF14_50%,#00C2FF_100%)]',
+          'transition-all duration-500'
         )}>
             <div className="relative bg-card rounded-[14px]">
                 {file && (
