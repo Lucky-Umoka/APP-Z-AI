@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Message } from '@/lib/types';
-import Logo from './Logo';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Card, CardContent } from '../ui/card';
 import VideoProcessingView from './VideoProcessingView';
@@ -11,6 +10,7 @@ import SummaryCard from './SummaryCard';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { ThumbsUp, ThumbsDown, FileVideo } from 'lucide-react';
+import LogoIcon from './LogoIcon';
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -48,8 +48,8 @@ export default function ChatMessages({ messages, conversationStep, onTemplateSel
           style={{ animationDelay: `${index * 50}ms` }}
         >
           {message.role === 'assistant' && (
-            <Avatar className="h-8 w-8 border-none">
-              <Logo className="h-full w-full" />
+            <Avatar className="h-8 w-8 border-none bg-transparent flex items-center justify-center">
+               <LogoIcon className="h-full w-full" />
             </Avatar>
           )}
 
