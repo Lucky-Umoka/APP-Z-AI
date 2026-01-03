@@ -15,7 +15,6 @@ interface ChatInputProps {
 const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(({ onSendMessage, isLoading }, ref) => {
   const [message, setMessage] = useState('');
   const [file, setFileState] = useState<File | null>(null);
-  const [isFocused, setIsFocused] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -74,8 +73,14 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
 
   return (
     <div className="w-full">
-        <div className={cn('relative w-full rounded-2xl border-2 border-transparent bg-card transition-all duration-700', isFocused ? 'p-px bg-[conic-gradient(from_var(--angle),_var(--tw-gradient-stops))] from-zuckky-green via-green-400 to-zuckky-green animate-border-flow' : 'border-border')}>
-          <div className={cn("relative w-full bg-card", isFocused ? 'rounded-[14px]' : 'rounded-2xl')}>
+        <div 
+          className={cn(
+            'relative w-full rounded-2xl p-px transition-all duration-700', 
+            'bg-[length:200%_200%] bg-gradient-to-r from-transparent via-transparent to-transparent',
+            'focus-within:animate-border-flow focus-within:bg-[length:100%_100%] focus-within:bg-gradient-to-r focus-within:from-[#39FF14] focus-within:to-green-500'
+          )}
+        >
+          <div className={cn("relative w-full bg-card rounded-[15px]")}>
             {file && (
             <div className="p-3 border-b border-border">
                 <div className="relative flex items-center gap-3 p-2 rounded-lg bg-background w-fit">
@@ -102,8 +107,6 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
                 value={message}
                 onChange={handleTextareaChange}
                 onKeyDown={handleKeyDown}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
                 rows={1}
                 className="h-auto max-h-48 min-h-[52px] w-full resize-none border-none bg-transparent px-12 py-3.5 text-base shadow-none ring-offset-transparent placeholder:text-muted-foreground/80 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200"
                 disabled={isLoading}

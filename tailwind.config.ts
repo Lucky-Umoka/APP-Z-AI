@@ -89,7 +89,9 @@ export default {
           to: { height: '0' },
         },
         'border-flow': {
-          to: { '--angle': '360deg' },
+          '0%': { background-position: '0% 50%' },
+          '50%': { background-position: '100% 50%' },
+          '100%': { background-position: '0% 50%' },
         },
       },
       animation: {
