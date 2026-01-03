@@ -8,20 +8,20 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 
 interface ChatInputProps {
-  onSendMessage: (message: string, file?: File) => void;
+  onSendMessage: (message: string, files?: File[]) => void;
   isLoading: boolean;
 }
 
 const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(({ onSendMessage, isLoading }, ref) => {
   const [message, setMessage] = useState('');
-  const [file, setFileState] = useState<File | null>(null);
+  const [files, setFilesState] = useState<File[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useImperativeHandle(ref, () => ({
     setFile: (file: File) => {
-      setFileState(file);
+      setFilesState(prev => [...prev, file]);
     }
   }));
 
@@ -35,10 +35,10 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
   };
 
   const handleSendMessage = () => {
-    if (isLoading || (!message.trim() && !file)) return;
-    onSendMessage(message.trim(), file || undefined);
+    if (isLoading || (!message.trim() && files.length === 0)) return;
+    onSendMessage(message.trim(), files.length > 0 ? files : undefined);
     setMessage('');
-    setFileState(null);
+    setFilesState([]);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -55,9 +55,8 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-        setFileState(selectedFile);
+    if (event.target.files) {
+        setFilesState(prev => [...prev, ...Array.from(event.target.files as FileList)]);
     }
   };
 
@@ -65,8 +64,8 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
     fileInputRef.current?.click();
   };
 
-  const removeFile = () => {
-    setFileState(null);
+  const removeFile = (fileToRemove: File) => {
+    setFilesState(prev => prev.filter(file => file !== fileToRemove));
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -82,23 +81,25 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
                 )}
             />
             <div className="relative w-full rounded-[15px] bg-card">
-                {file && (
-                <div className="p-3 border-b border-border">
-                    <div className="relative flex items-center gap-3 p-2 rounded-lg bg-background w-fit">
-                        <FileVideo className="h-6 w-6 text-muted-foreground" />
-                        <div className="text-sm">
-                            <div className="font-medium truncate max-w-xs">{file.name}</div>
-                            <div className="text-muted-foreground">{Math.round(file.size / 1024)} KB</div>
+                {files.length > 0 && (
+                <div className="p-3 border-b border-border grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    {files.map((file, index) => (
+                        <div key={index} className="relative flex items-center gap-3 p-2 rounded-lg bg-background w-fit">
+                            <FileVideo className="h-6 w-6 text-muted-foreground" />
+                            <div className="text-sm overflow-hidden">
+                                <div className="font-medium truncate max-w-[100px]">{file.name}</div>
+                                <div className="text-muted-foreground">{Math.round(file.size / 1024)} KB</div>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-muted text-muted-foreground hover:bg-destructive hover:text-destructive-foreground z-10"
+                                onClick={() => removeFile(file)}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
                         </div>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-muted text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={removeFile}
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </div>
+                    ))}
                 </div>
                 )}
                 <div className="relative">
@@ -141,7 +142,7 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
                         size="icon"
                         className="text-muted-foreground/90 hover:bg-accent/50 hover:text-foreground disabled:bg-transparent transition-all duration-200 hover:scale-105 active:scale-95"
                         onClick={handleSendMessage}
-                        disabled={isLoading || (!message.trim() && !file)}
+                        disabled={isLoading || (!message.trim() && files.length === 0)}
                         aria-label="Send Message"
                     >
                         <Send className="size-6" />
@@ -159,6 +160,7 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
         onChange={handleFileChange}
         className="hidden"
         accept="video/*"
+        multiple
       />
     </div>
   );

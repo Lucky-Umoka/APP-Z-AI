@@ -75,11 +75,17 @@ export default function Home() {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('video/')) {
-          if (chatInputRef.current) {
-            chatInputRef.current.setFile(file);
-          }
+        const droppedFiles = Array.from(e.dataTransfer.files);
+        const videoFiles = droppedFiles.filter(file => file.type.startsWith('video/'));
+
+        if (videoFiles.length > 0) {
+            if (chatInputRef.current) {
+                videoFiles.forEach(file => {
+                    if (chatInputRef.current) {
+                        chatInputRef.current.setFile(file);
+                    }
+                });
+            }
         }
     };
     

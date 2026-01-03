@@ -91,14 +91,19 @@ export function useConversation() {
     }
   };
 
-  const sendMessage = useCallback(async (message: string, file?: File) => {
+  const sendMessage = useCallback(async (message: string, files?: File[]) => {
     setIsLoading(true);
 
-    if (message.trim() || file) {
-      addMessage({ role: 'user', content: message.trim() });
+    if (message.trim() || (files && files.length > 0)) {
+        let content = message.trim();
+        if (files && files.length > 0) {
+            content += `\n\nAttachments: ${files.map(f => f.name).join(', ')}`;
+        }
+        addMessage({ role: 'user', content });
     }
     
     await simulateThinking();
+    const file = files?.[0]; // For now, we'll just handle the first file for logic flow
 
     switch (conversationStep) {
         case ConversationStep.WELCOME:
