@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { Card } from '../ui/card';
 
 interface ChatInputProps {
   onSendMessage: (message: string, file?: File) => void;
@@ -75,7 +74,7 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
 
   return (
     <div className="w-full">
-        <div className={cn('relative w-full rounded-2xl bg-card border-2 border-border transition-all duration-700', isFocused ? 'border-transparent p-px bg-gradient-to-r from-[#00ff87] via-[#60efff] to-[#0099ff] animate-border-flow' : '')}>
+        <div className={cn('relative w-full rounded-2xl border-2 border-transparent bg-card transition-all duration-700', isFocused ? 'p-px bg-[conic-gradient(from_var(--angle),_var(--tw-gradient-stops))] from-zuckky-green via-green-400 to-zuckky-green animate-border-flow' : 'border-border')}>
           <div className={cn("relative w-full bg-card", isFocused ? 'rounded-[14px]' : 'rounded-2xl')}>
             {file && (
             <div className="p-3 border-b border-border">
@@ -116,7 +115,7 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
                         <Button
                         variant="ghost"
                         size="icon"
-                        className="text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-all duration-200 hover:scale-105 active:scale-95"
+                        className="text-muted-foreground/90 hover:bg-accent/50 hover:text-foreground transition-all duration-200 hover:scale-105 active:scale-95"
                         onClick={handleUploadClick}
                         disabled={isLoading}
                         aria-label="Upload Footage"
@@ -134,12 +133,12 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="text-muted-foreground hover:bg-accent/50 hover:text-foreground disabled:bg-transparent transition-all duration-200 hover:scale-105 active:scale-95"
+                    className="text-muted-foreground/90 hover:bg-accent/50 hover:text-foreground disabled:bg-transparent transition-all duration-200 hover:scale-105 active:scale-95"
                     onClick={handleSendMessage}
                     disabled={isLoading || (!message.trim() && !file)}
                     aria-label="Send Message"
                 >
-                    <Send className="size-5" />
+                    <Send className="size-6" />
                 </Button>
                 </div>
             </div>
