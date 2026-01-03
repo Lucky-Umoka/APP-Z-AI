@@ -48,11 +48,8 @@ export default function ChatMessages({ messages, conversationStep, onTemplateSel
           style={{ animationDelay: `${index * 50}ms` }}
         >
           {message.role === 'assistant' && (
-            <Avatar className="h-8 w-8 border border-primary/20">
-              <AvatarImage src="/logo.png" alt="Zuckky AI Avatar" />
-              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/50 text-primary">
-                <Logo className="h-5 w-5" />
-              </AvatarFallback>
+            <Avatar className="h-8 w-8 border-none">
+              <Logo className="h-full w-full" />
             </Avatar>
           )}
 
