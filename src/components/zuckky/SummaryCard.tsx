@@ -23,8 +23,9 @@ export default function SummaryCard({ summary }: SummaryCardProps) {
         {summaryEntries.map(([key, value], index) => (
           <React.Fragment key={key}>
             <div className="flex justify-between items-center py-2">
-              <p className="text-muted-foreground">{key}</p>
-              <p className="text-right text-foreground">{value}</p>
+              <p className="text-muted-foreground w-1/3">{key}</p>
+              <Separator orientation="vertical" className="h-6 mx-4" />
+              <p className="text-right text-foreground flex-1">{value}</p>
             </div>
             {index < summaryEntries.length - 1 && <Separator className="bg-border/50" />}
           </React.Fragment>

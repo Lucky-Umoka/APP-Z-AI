@@ -48,7 +48,7 @@ export default function ChatMessages({ messages, conversationStep, onTemplateSel
                 ) : message.type === 'confirmation' && message.summaryDetails ? (
                     <SummaryCard summary={message.summaryDetails} />
                 ) : (
-                    <div className="p-4 text-base">{message.content}</div>
+                    <div className="p-4 text-base bg-transparent border-none">{message.content}</div>
                 )}
 
                 {index === messages.length - 1 && (
