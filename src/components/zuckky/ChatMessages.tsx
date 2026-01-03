@@ -82,7 +82,7 @@ export default function ChatMessages({ messages, conversationStep, onTemplateSel
               </>
             ) : ( // User message
                 <Card
-                    className='rounded-2xl transition-all duration-200 hover:shadow-md rounded-br-none bg-gradient-to-r from-[#00ff87] to-[#00cc6f] text-black font-medium'
+                    className='rounded-2xl transition-all duration-200 hover:shadow-md rounded-br-none border border-green-500/20 bg-green-500/10 text-foreground'
                 >
                     <CardContent className="p-4 text-base">{message.content}</CardContent>
                 </Card>
