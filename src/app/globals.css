@@ -90,6 +90,10 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  /* Remove the default focus outline that causes the white flash */
+  textarea[placeholder="Give me instructions for your video..."]:focus {
+    outline: none !important;
+  }
 }
 
 @property --angle {
