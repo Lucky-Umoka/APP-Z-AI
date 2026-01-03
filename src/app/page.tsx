@@ -125,41 +125,43 @@ export default function Home() {
     <SidebarProvider>
       <div className="flex h-screen w-full" onDragEnter={handleDragEnter}>
         <ZuckkySidebar />
-        <main ref={scrollAreaRef} className={cn("flex-1 flex flex-col items-center relative overflow-y-auto bg-black", messages.length === 0 && "justify-center")}>
-            
-            {messages.length === 0 ? (
-                <div className="w-full max-w-3xl flex-1 flex flex-col justify-center items-center">
-                    <div className={cn("animate-in fade-in duration-700", messages.length > 0 ? "hidden" : "block")}>
-                        <Welcome />
-                    </div>
-                    <div className="w-full max-w-3xl px-4 pb-4">
-                        <ChatInput ref={chatInputRef} onSendMessage={sendMessage} isLoading={isLoading}/>
-                        <div className="mx-auto mt-4 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in duration-700">
-                            <SuggestionPill icon={<MessageSquare />} text="What styles of videos can you edit?" onClick={() => sendMessage("What styles of videos can you edit?")} />
-                            <SuggestionPill icon={<Film />} text="Turn this into a viral short-form clip" onClick={() => sendMessage("Turn this into a viral short-form clip")} />
-                            <SuggestionPill icon={<Zap />} text="Make this video more engaging" onClick={() => sendMessage("Make this video more engaging")} />
+        <div className="relative flex-1">
+            <main ref={scrollAreaRef} className={cn("h-full flex flex-col items-center overflow-y-auto bg-black", messages.length === 0 && "justify-center")}>
+                
+                {messages.length === 0 ? (
+                    <div className="w-full max-w-3xl flex-1 flex flex-col justify-center items-center">
+                        <div className={cn("animate-in fade-in duration-700", messages.length > 0 ? "hidden" : "block")}>
+                            <Welcome />
+                        </div>
+                        <div className="w-full max-w-3xl px-4 pb-4">
+                            <ChatInput ref={chatInputRef} onSendMessage={sendMessage} isLoading={isLoading}/>
+                            <div className="mx-auto mt-4 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in duration-700">
+                                <SuggestionPill icon={<MessageSquare />} text="What styles of videos can you edit?" onClick={() => sendMessage("What styles of videos can you edit?")} />
+                                <SuggestionPill icon={<Film />} text="Turn this into a viral short-form clip" onClick={() => sendMessage("Turn this into a viral short-form clip")} />
+                                <SuggestionPill icon={<Zap />} text="Make this video more engaging" onClick={() => sendMessage("Make this video more engaging")} />
+                            </div>
                         </div>
                     </div>
-                </div>
-            ) : (
-                <>
-                   <div className="w-full max-w-3xl flex-1 flex flex-col">
-                     <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 h-full">
-                       <ChatMessages 
-                          messages={messages}
-                          conversationStep={conversationStep}
-                          onTemplateSelect={handleTemplateSelection}
-                          onConfirm={handleConfirmation}
-                          onPreviewClick={() => setCanvasOpen(true)}
-                      />
-                     </div>
-                   </div>
-                   <div className="sticky bottom-0 w-full max-w-3xl px-4 pb-4 bg-gradient-to-t from-black via-black/80 to-transparent">
-                       <ChatInput ref={chatInputRef} onSendMessage={sendMessage} isLoading={isLoading}/>
-                   </div>
-                </>
-            )}
-
+                ) : (
+                    <>
+                       <div className="w-full max-w-3xl flex-1 flex flex-col">
+                         <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 h-full">
+                           <ChatMessages 
+                              messages={messages}
+                              conversationStep={conversationStep}
+                              onTemplateSelect={handleTemplateSelection}
+                              onConfirm={handleConfirmation}
+                              onPreviewClick={() => setCanvasOpen(true)}
+                          />
+                         </div>
+                       </div>
+                       <div className="sticky bottom-0 w-full max-w-3xl px-4 pb-4 bg-gradient-to-t from-black via-black/80 to-transparent">
+                           <ChatInput ref={chatInputRef} onSendMessage={sendMessage} isLoading={isLoading}/>
+                       </div>
+                    </>
+                )}
+                
+            </main>
             {showScrollDown && (
                 <Button
                     size="icon"
@@ -170,6 +172,8 @@ export default function Home() {
                     <ArrowDown className="h-5 w-5" />
                 </Button>
             )}
+        </div>
+
             
             {isDragging && (
                 <div
@@ -191,7 +195,6 @@ export default function Home() {
                 onOpenChange={setCanvasOpen}
                 videoUrl={editedVideoUrl}
             />
-        </main>
       </div>
     </SidebarProvider>
   );
