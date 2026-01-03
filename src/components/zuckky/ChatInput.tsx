@@ -1,7 +1,7 @@
 'use client';
 
 import { Paperclip, Send, X, FileVideo } from 'lucide-react';
-import React, { useRef, ChangeEvent, KeyboardEvent, useState } from 'react';
+import React, { useRef, ChangeEvent, KeyboardEvent, useState, forwardRef, useImperativeHandle } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -13,11 +13,17 @@ interface ChatInputProps {
   isLoading: boolean;
 }
 
-export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
+const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(({ onSendMessage, isLoading }, ref) => {
   const [message, setMessage] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFileState] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    setFile: (file: File) => {
+      setFileState(file);
+    }
+  }));
 
   const handleTextareaChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(event.target.value);
@@ -32,7 +38,7 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
     if (isLoading || (!message.trim() && !file)) return;
     onSendMessage(message.trim(), file || undefined);
     setMessage('');
-    setFile(null);
+    setFileState(null);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -51,7 +57,7 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
-        setFile(selectedFile);
+        setFileState(selectedFile);
     }
   };
 
@@ -60,7 +66,7 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
   };
 
   const removeFile = () => {
-    setFile(null);
+    setFileState(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -146,4 +152,7 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
       />
     </div>
   );
-}
+});
+
+ChatInput.displayName = 'ChatInput';
+export default ChatInput;

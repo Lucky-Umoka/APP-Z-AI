@@ -48,6 +48,8 @@ export default function Home() {
     const [isDragging, setIsDragging] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const [showScrollDown, setShowScrollDown] = useState(false);
+    const chatInputRef = useRef<{ setFile: (file: File) => void }>(null);
+
 
     const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -75,7 +77,9 @@ export default function Home() {
         setIsDragging(false);
         const file = e.dataTransfer.files[0];
         if (file && file.type.startsWith('video/')) {
-          sendMessage(`Uploading footage: ${file.name}`, file);
+          if (chatInputRef.current) {
+            chatInputRef.current.setFile(file);
+          }
         }
     };
     
@@ -129,7 +133,7 @@ export default function Home() {
                         <Welcome />
                     </div>
                     <div className="w-full max-w-3xl px-4 pb-4">
-                        <ChatInput onSendMessage={sendMessage} isLoading={isLoading}/>
+                        <ChatInput ref={chatInputRef} onSendMessage={sendMessage} isLoading={isLoading}/>
                         <div className="mx-auto mt-4 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in duration-700">
                             <SuggestionPill icon={<MessageSquare />} text="What styles of videos can you edit?" onClick={() => sendMessage("What styles of videos can you edit?")} />
                             <SuggestionPill icon={<Film />} text="Turn this into a viral short-form clip" onClick={() => sendMessage("Turn this into a viral short-form clip")} />
@@ -151,7 +155,7 @@ export default function Home() {
                      </div>
                    </div>
                    <div className="sticky bottom-0 w-full max-w-3xl px-4 pb-4 bg-gradient-to-t from-background via-background/80 to-transparent">
-                       <ChatInput onSendMessage={sendMessage} isLoading={isLoading}/>
+                       <ChatInput ref={chatInputRef} onSendMessage={sendMessage} isLoading={isLoading}/>
                    </div>
                 </>
             )}

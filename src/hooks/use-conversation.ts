@@ -93,9 +93,9 @@ export function useConversation() {
 
   const sendMessage = useCallback(async (message: string, file?: File) => {
     setIsLoading(true);
-    // Only add user message if it has content or a file
+
     if (message.trim() || file) {
-        addMessage({ role: 'user', content: file ? `Uploaded: ${file.name}` : message });
+      addMessage({ role: 'user', content: message.trim() });
     }
     
     await simulateThinking();
@@ -103,10 +103,11 @@ export function useConversation() {
     switch (conversationStep) {
         case ConversationStep.WELCOME:
             if (file) {
-                setEditingDetails(prev => ({ ...prev, videoFile: file }));
+                setEditingDetails(prev => ({ ...prev, videoFile: file, instructions: message }));
                 addMessage({ role: 'assistant', content: `Great, your footage is uploaded. Now, please select an editing style for your video.`, type: 'template-selection' });
                 setConversationStep(ConversationStep.AWAITING_TEMPLATE);
             } else {
+                setEditingDetails(prev => ({ ...prev, instructions: message }));
                 addMessage({ role: 'assistant', content: `Hi, I'm Zuckky AI, here to help you edit your videos to go viral. To get started, please give me some instructions or upload your footage.` });
                 setConversationStep(ConversationStep.AWAITING_VIDEO);
             }
