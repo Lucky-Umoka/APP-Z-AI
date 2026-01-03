@@ -180,7 +180,7 @@ export function useConversation() {
             break;
     }
     setIsLoading(false);
-  }, [conversationStep, addMessage, editingDetails, messages.length]);
+  }, [conversationStep, addMessage, editingDetails]);
 
   const handleTemplateSelection = useCallback(async (template: string) => {
     setIsLoading(true);
