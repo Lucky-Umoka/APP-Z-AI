@@ -134,15 +134,18 @@ export default function VideoProcessingView({
                         </div>
 
                         {/* Middle Section: Main Text & Trigger */}
-                        <AccordionTrigger className="flex-1 p-0 hover:no-underline flex flex-col items-start gap-1">
-                            <p className="text-base font-medium text-foreground">
-                                {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
-                            </p>
-                            {showDetails && (
-                                <span className="text-sm text-muted-foreground mt-1 flex items-center">
-                                    Editing<EditingDots />
-                                </span>
-                            )}
+                        <AccordionTrigger className="flex-1 p-0 hover:no-underline flex justify-between items-center">
+                            <div className="flex flex-col items-start gap-1">
+                                <p className="text-base font-medium text-foreground">
+                                    {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
+                                </p>
+                                {showDetails && (
+                                    <span className="text-sm text-muted-foreground mt-1 flex items-center">
+                                        Editing<EditingDots />
+                                    </span>
+                                )}
+                            </div>
+                            {!isComplete && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
                         </AccordionTrigger>
                     </div>
                 </div>
