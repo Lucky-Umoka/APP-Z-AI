@@ -136,10 +136,13 @@ export default function VideoProcessingView({
 
                         {/* Middle Section: Main Text & Trigger */}
                         <AccordionTrigger 
-                            className="flex-1 p-0 hover:no-underline flex justify-between items-center"
+                            className={cn(
+                                "flex-1 p-0 hover:no-underline flex justify-between items-center",
+                                isComplete && "[&>svg]:hidden"
+                            )}
                             disabled={isComplete}
                         >
-                             <div className="flex flex-col items-start gap-1">
+                             <div className="flex flex-col items-start gap-1 text-left">
                                 <p className="text-base font-medium text-foreground">
                                     {isComplete ? 'Your video is ready.' : 'Our Video Agent is working on your video...'}
                                 </p>
