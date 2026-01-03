@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/sidebar';
 import { MessageSquarePlus, MessageSquareText, Settings2 } from 'lucide-react';
 import { UserProfile } from './UserProfile';
-import Logo from './Logo';
+import Logo from '@/components/zuckky/Logo';
 
 export function ZuckkySidebar() {
   return (

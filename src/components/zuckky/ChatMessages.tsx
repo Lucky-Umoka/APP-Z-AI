@@ -10,7 +10,7 @@ import SummaryCard from './SummaryCard';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { ThumbsUp, ThumbsDown, FileVideo } from 'lucide-react';
-import Logo from './Logo';
+import Logo from '@/components/zuckky/Logo';
 
 interface ChatMessagesProps {
   messages: Message[];
