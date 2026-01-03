@@ -95,11 +95,7 @@ export function useConversation() {
     setIsLoading(true);
 
     if (message.trim() || (files && files.length > 0)) {
-        let content = message.trim();
-        if (files && files.length > 0) {
-            content += `\n\nAttachments: ${files.map(f => f.name).join(', ')}`;
-        }
-        addMessage({ role: 'user', content });
+        addMessage({ role: 'user', content: message.trim(), attachments: files });
     }
     
     await simulateThinking();

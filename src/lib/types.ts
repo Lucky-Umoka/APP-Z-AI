@@ -13,6 +13,7 @@ export type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: React.ReactNode;
+  attachments?: File[];
   type?: 'text' | 'template-selection' | 'processing' | 'confirmation' | 'final-video' | 'error';
   processingState?: ProcessingState;
   summaryDetails?: SummaryDetails;

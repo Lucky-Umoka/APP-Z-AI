@@ -10,15 +10,33 @@ import TemplateSelector from './TemplateSelector';
 import SummaryCard from './SummaryCard';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, FileVideo } from 'lucide-react';
 
 interface ChatMessagesProps {
   messages: Message[];
-  conversationStep: any; 
+  conversationStep: any;
   onTemplateSelect: (template: string) => void;
   onConfirm: (confirmed: boolean) => void;
   onPreviewClick: () => void;
 }
+
+const UserMessageAttachments = ({ attachments }: { attachments: File[] }) => {
+    if (!attachments || attachments.length === 0) return null;
+  
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-4 border-b border-green-500/20">
+        {attachments.map((file, index) => (
+          <div key={index} className="relative flex items-center gap-3 p-2 rounded-lg bg-background/50 w-fit">
+            <FileVideo className="h-6 w-6 text-muted-foreground" />
+            <div className="text-sm overflow-hidden">
+              <div className="font-medium truncate max-w-[100px]">{file.name}</div>
+              <div className="text-muted-foreground text-xs">{Math.round(file.size / 1024)} KB</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
 export default function ChatMessages({ messages, conversationStep, onTemplateSelect, onConfirm, onPreviewClick }: ChatMessagesProps) {
   return (
@@ -82,9 +100,12 @@ export default function ChatMessages({ messages, conversationStep, onTemplateSel
               </>
             ) : ( // User message
                 <Card
-                    className='rounded-2xl transition-all duration-200 hover:shadow-md rounded-br-none border border-green-500/20 bg-green-500/10 text-foreground'
+                    className='rounded-2xl transition-all duration-200 hover:shadow-md rounded-br-none border border-green-500/20 bg-green-500/10 text-foreground overflow-hidden'
                 >
-                    <CardContent className="p-4 text-base">{message.content}</CardContent>
+                    <UserMessageAttachments attachments={message.attachments || []} />
+                    {message.content && (
+                       <CardContent className="p-4 text-base">{message.content}</CardContent>
+                    )}
                 </Card>
             )}
           </div>
