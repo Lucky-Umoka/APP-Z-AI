@@ -164,7 +164,7 @@ export default function Home() {
                 <Button
                     size="icon"
                     variant="outline"
-                    className="absolute bottom-24 right-6 z-10 h-10 w-10 rounded-full animate-in fade-in"
+                    className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 h-10 w-10 rounded-full animate-in fade-in"
                     onClick={scrollToBottom}
                 >
                     <ArrowDown className="h-5 w-5" />
