@@ -111,7 +111,7 @@ const ChatInput = forwardRef<{ setFile: (file: File) => void }, ChatInputProps>(
                         onChange={handleTextareaChange}
                         onKeyDown={handleKeyDown}
                         rows={1}
-                        className="h-auto max-h-48 min-h-[52px] w-full resize-none border-none bg-transparent px-12 py-3.5 text-base shadow-none ring-offset-transparent placeholder:text-muted-foreground/80 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200"
+                        className="h-auto max-h-48 min-h-[52px] w-full resize-none bg-transparent px-12 py-3.5 text-base shadow-none ring-offset-transparent placeholder:text-muted-foreground/80 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200"
                         disabled={isLoading}
                     />
                     <div className="absolute bottom-3 left-3 flex items-center">
