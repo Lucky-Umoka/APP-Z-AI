@@ -5,7 +5,7 @@ import { useConversation } from '@/hooks/use-conversation';
 import ChatInput from '@/components/zuckky/ChatInput';
 import ChatMessages from '@/components/zuckky/ChatMessages';
 import { ZuckkySidebar } from '@/components/zuckky/ZuckkySidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { ArrowDown, Film, MessageSquare, Zap } from 'lucide-react';
 import PreviewCanvas from '@/components/zuckky/PreviewCanvas';
 import { DragEvent, useState, useRef, useEffect } from 'react';
@@ -131,8 +131,17 @@ export default function Home() {
     <SidebarProvider>
       <div className="flex h-screen w-full" onDragEnter={handleDragEnter}>
         <ZuckkySidebar />
-        <div className="relative flex-1">
-            <main ref={scrollAreaRef} className={cn("h-full flex flex-col items-center overflow-y-auto bg-black", messages.length === 0 && "justify-center")}>
+        <div className="relative flex flex-1 flex-col overflow-hidden">
+            <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-border bg-black/80 px-4 backdrop-blur-sm md:hidden">
+                <SidebarTrigger />
+                <div className="flex flex-1 items-center gap-2">
+                    <Logo className="h-7 w-7" />
+                    <span className="truncate text-lg font-semibold">
+                    Zuckky
+                    </span>
+                </div>
+            </header>
+            <main ref={scrollAreaRef} className={cn("flex-1 flex flex-col items-center overflow-y-auto bg-black", messages.length === 0 && "justify-center")}>
                 
                 {messages.length === 0 ? (
                     <div className="w-full max-w-3xl flex-1 flex flex-col justify-center items-center">
