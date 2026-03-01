@@ -43,20 +43,6 @@ export function useConversation() {
 
   const simulateThinking = (duration = 1000) => new Promise(resolve => setTimeout(resolve, duration));
 
-  const resetForNewVideo = () => {
-    setEditingDetails({
-        videoFile: null,
-        trainingFile: null,
-        template: '',
-        customDetails: '',
-        instructions: '',
-        summaryPlan: null,
-        editedVideoUrl: null,
-    });
-    setConversationStep(ConversationStep.AWAITING_VIDEO);
-    addMessage({ role: 'assistant', content: 'Great! Please upload your new footage and provide instructions.' });
-  };
-  
   const handleConfirmation = useCallback(async (confirmed: boolean, newInstructions?: string) => {
     if (confirmationTimer) {
         clearTimeout(confirmationTimer);
@@ -68,6 +54,7 @@ export function useConversation() {
       addMessage({ role: 'user', content: 'Yes, proceed.' });
       await simulateThinking();
       
+      // Strict Auth Check
       if (!user || user.isAnonymous) {
         router.push('/login');
         setIsLoading(false);
@@ -247,7 +234,9 @@ export function useConversation() {
         
         case ConversationStep.DONE:
             if (message.toLowerCase().includes("new video")) {
-                resetForNewVideo();
+                // reset logic
+                setConversationStep(ConversationStep.AWAITING_VIDEO);
+                addMessage({ role: 'assistant', content: 'Ready for a new project! Please upload your footage.' });
             }
             break;
 
@@ -259,7 +248,7 @@ export function useConversation() {
   }, [conversationStep, addMessage, editingDetails, handleConfirmation, user, router]);
 
   const handleTemplateSelection = useCallback(async (template: string) => {
-    // Auth Guard: Redirect immediately if not logged in
+    // Auth Guard
     if (!user || user.isAnonymous) {
       router.push('/login');
       return;

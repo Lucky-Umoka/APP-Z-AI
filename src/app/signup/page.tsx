@@ -18,15 +18,28 @@ export default function SignupPage() {
 
   // Redirect if already logged in (and not anonymous)
   useEffect(() => {
-    if (user && !user.isAnonymous) {
+    if (!isUserLoading && user && !user.isAnonymous) {
       router.push('/');
     }
-  }, [user, router]);
+  }, [user, isUserLoading, router]);
 
-  const handleGoogleSignUp = () => {
+  const handleGoogleSignUp = async () => {
     setIsSubmitting(true);
-    initiateGoogleSignIn(auth);
+    try {
+      await initiateGoogleSignIn(auth);
+    } catch (error) {
+      console.error("Google Sign-Up failed:", error);
+      setIsSubmitting(false);
+    }
   };
+
+  if (isUserLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-black px-4 py-12">
@@ -37,14 +50,14 @@ export default function SignupPage() {
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight">Create an account</CardTitle>
           <CardDescription>
-            Join Zuckky AI and start editing viral videos with the power of AI.
+            Join Zuckky AI with your Google account to start editing.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <Button 
             onClick={handleGoogleSignUp}
             className="w-full bg-white text-black hover:bg-gray-100 font-semibold py-6"
-            disabled={isSubmitting || isUserLoading}
+            disabled={isSubmitting}
           >
             {isSubmitting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
