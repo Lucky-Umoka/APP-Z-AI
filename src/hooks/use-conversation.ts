@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { Message, ConversationStep, ProcessingState, EditingDetails } from '@/lib/types';
-import { initializeFirebase, useUser } from '@/firebase';
+import { initializeFirebase, useUser, useAuth, initiateAnonymousSignIn } from '@/firebase';
 import { collection, doc, setDoc, serverTimestamp, addDoc, onSnapshot } from 'firebase/firestore';
 import { uploadVideoFile } from '@/lib/storage-utils';
 import { runSubmagicEdit } from '@/ai/flows/submagic-video-edit';
@@ -14,7 +14,8 @@ const PROCESSING_STEP_DURATION = 1500;
 const TOTAL_PROCESSING_STEPS = 8;
 
 export function useConversation() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationStep, setConversationStep] = useState<ConversationStep>(ConversationStep.WELCOME);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +31,13 @@ export function useConversation() {
   const [isCanvasOpen, setCanvasOpen] = useState(false);
   const [confirmationTimer, setConfirmationTimer] = useState<NodeJS.Timeout | null>(null);
   
+  // Handle anonymous sign-in for the prototype
+  useEffect(() => {
+    if (!isUserLoading && !user && auth) {
+      initiateAnonymousSignIn(auth);
+    }
+  }, [user, isUserLoading, auth]);
+
   const updateMessage = (id: string, updates: Partial<Message>) => {
     setMessages(prev => prev.map(msg => msg.id === id ? { ...msg, ...updates } : msg));
   };
@@ -56,6 +64,117 @@ export function useConversation() {
     addMessage({ role: 'assistant', content: 'Great! Please upload your new footage and provide instructions.' });
   };
   
+  const handleConfirmation = useCallback(async (confirmed: boolean, newInstructions?: string) => {
+    if (confirmationTimer) {
+        clearTimeout(confirmationTimer);
+        setConfirmationTimer(null);
+    }
+    setIsLoading(true);
+  
+    if (confirmed) {
+      addMessage({ role: 'user', content: 'Yes, proceed.' });
+      await simulateThinking();
+      
+      if (!user) {
+        addMessage({ role: 'assistant', content: 'Connecting to services...', type: 'error' });
+        setIsLoading(false);
+        return;
+      }
+
+      setConversationStep(ConversationStep.PROCESSING);
+      
+      try {
+        const { firestore } = initializeFirebase();
+        
+        // 1. Upload video to Storage
+        const videoFile = editingDetails.videoFile;
+        if (!videoFile) throw new Error('No video file selected.');
+        
+        const timestamp = Date.now();
+        const storagePath = `users/${user.uid}/videos/${timestamp}_${videoFile.name}`;
+        const publicUrl = await uploadVideoFile(videoFile, storagePath);
+
+        // 2. Create Job in Firestore
+        const conversationId = 'conv_' + timestamp;
+        const jobId = 'job_' + timestamp;
+        
+        const jobRef = doc(firestore, `users/${user.uid}/conversations/${conversationId}/videoEditingJobs/${jobId}`);
+        await setDoc(jobRef, {
+          id: jobId,
+          userId: user.uid,
+          conversationId: conversationId,
+          originalMediaFileId: 'initial_upload',
+          customInstructions: editingDetails.instructions,
+          status: 'pending',
+          progress: 0,
+          currentStep: 0,
+          creditCost: 1,
+          createdAt: serverTimestamp(),
+        });
+
+        // 3. Show processing state in UI
+        const initialState: ProcessingState = {
+          videoUrl: publicUrl,
+          progress: 0,
+          currentStep: 0,
+        };
+        const processingMessageId = addMessage({ role: 'assistant', content: '', type: 'processing', processingState: initialState });
+
+        // 4. Listen to the Firestore job document for updates
+        const unsubscribe = onSnapshot(jobRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            updateMessage(processingMessageId, {
+              processingState: {
+                ...initialState,
+                progress: data.progress || 0,
+                currentStep: Math.floor((data.progress || 0) / 12.5),
+                isCollapsibleOpen: data.status !== 'completed'
+              }
+            });
+
+            if (data.status === 'completed') {
+              unsubscribe();
+              setEditingDetails(prev => ({...prev, editedVideoUrl: data.editedVideoUrl }));
+              setCanvasOpen(true);
+              setConversationStep(ConversationStep.DONE);
+              addMessage({ role: 'assistant', content: 'Your video is ready. Review it in the preview canvas!', type: 'final-video' });
+              setIsLoading(false);
+            } else if (data.status === 'error') {
+              unsubscribe();
+              addMessage({ role: 'assistant', content: `Error: ${data.error || 'The editing process failed.'}`, type: 'error' });
+              setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
+              setIsLoading(false);
+            }
+          }
+        });
+
+        // 5. Trigger the Backend Genkit Flow
+        runSubmagicEdit({
+          userId: user.uid,
+          conversationId: conversationId,
+          jobId: jobId,
+          videoUrl: publicUrl,
+          templateName: editingDetails.template
+        }).catch(err => {
+          console.error('Flow failed:', err);
+        });
+
+      } catch (error: any) {
+        addMessage({ role: 'assistant', content: `Something went wrong: ${error.message}`, type: 'error' });
+        setIsLoading(false);
+      }
+  
+    } else {
+      addMessage({ role: 'user', content: newInstructions || 'No, I have changes.' });
+      await simulateThinking();
+      addMessage({ role: 'assistant', content: 'No problem. Please provide your updated instructions.' });
+      setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
+      setEditingDetails(prev => ({...prev, summaryPlan: null}));
+      setIsLoading(false);
+    }
+  }, [addMessage, confirmationTimer, editingDetails, user]);
+
   const sendMessage = useCallback(async (message: string, files?: File[]) => {
     setIsLoading(true);
 
@@ -160,119 +279,6 @@ export function useConversation() {
     }
     setIsLoading(false);
   }, [addMessage]);
-
-  const handleConfirmation = useCallback(async (confirmed: boolean, newInstructions?: string) => {
-    if (confirmationTimer) {
-        clearTimeout(confirmationTimer);
-        setConfirmationTimer(null);
-    }
-    setIsLoading(true);
-  
-    if (confirmed) {
-      addMessage({ role: 'user', content: 'Yes, proceed.' });
-      await simulateThinking();
-      
-      if (!user) {
-        addMessage({ role: 'assistant', content: 'You need to be signed in to perform edits.', type: 'error' });
-        setIsLoading(false);
-        return;
-      }
-
-      setConversationStep(ConversationStep.PROCESSING);
-      
-      try {
-        const { firestore } = initializeFirebase();
-        
-        // 1. Upload video to Storage
-        const videoFile = editingDetails.videoFile;
-        if (!videoFile) throw new Error('No video file selected.');
-        
-        const timestamp = Date.now();
-        const storagePath = `users/${user.uid}/videos/${timestamp}_${videoFile.name}`;
-        const publicUrl = await uploadVideoFile(videoFile, storagePath);
-
-        // 2. Create Conversation and Job in Firestore
-        // For prototype, we'll use a hardcoded conversation ID or generate one
-        const conversationId = 'conv_' + timestamp;
-        const jobId = 'job_' + timestamp;
-        
-        const jobRef = doc(firestore, `users/${user.uid}/conversations/${conversationId}/videoEditingJobs/${jobId}`);
-        await setDoc(jobRef, {
-          id: jobId,
-          userId: user.uid,
-          conversationId: conversationId,
-          originalMediaFileId: 'initial_upload',
-          customInstructions: editingDetails.instructions,
-          status: 'pending',
-          progress: 0,
-          currentStep: 0,
-          creditCost: 1,
-          createdAt: serverTimestamp(),
-        });
-
-        // 3. Show processing state in UI
-        const initialState: ProcessingState = {
-          videoUrl: publicUrl,
-          progress: 0,
-          currentStep: 0,
-        };
-        const processingMessageId = addMessage({ role: 'assistant', content: '', type: 'processing', processingState: initialState });
-
-        // 4. Listen to the Firestore job document for updates from the backend
-        const unsubscribe = onSnapshot(jobRef, (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            updateMessage(processingMessageId, {
-              processingState: {
-                ...initialState,
-                progress: data.progress || 0,
-                currentStep: Math.floor((data.progress || 0) / 12.5), // Estimate step based on progress
-                isCollapsibleOpen: data.status !== 'completed'
-              }
-            });
-
-            if (data.status === 'completed') {
-              unsubscribe();
-              setEditingDetails(prev => ({...prev, editedVideoUrl: data.editedVideoUrl }));
-              setCanvasOpen(true);
-              setConversationStep(ConversationStep.DONE);
-              addMessage({ role: 'assistant', content: 'Your video is ready. Review it in the preview canvas!', type: 'final-video' });
-              setIsLoading(false);
-            } else if (data.status === 'error') {
-              unsubscribe();
-              addMessage({ role: 'assistant', content: `Error: ${data.error || 'The editing process failed.'}`, type: 'error' });
-              setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
-              setIsLoading(false);
-            }
-          }
-        });
-
-        // 5. Trigger the Backend Genkit Flow (Async)
-        // We don't await this because the flow contains the 10-minute loop
-        runSubmagicEdit({
-          userId: user.uid,
-          conversationId: conversationId,
-          jobId: jobId,
-          videoUrl: publicUrl,
-          templateName: editingDetails.template
-        }).catch(err => {
-          console.error('Flow failed:', err);
-        });
-
-      } catch (error: any) {
-        addMessage({ role: 'assistant', content: `Something went wrong: ${error.message}`, type: 'error' });
-        setIsLoading(false);
-      }
-  
-    } else {
-      addMessage({ role: 'user', content: newInstructions || 'No, I have changes.' });
-      await simulateThinking();
-      addMessage({ role: 'assistant', content: 'No problem. Please provide your updated instructions.' });
-      setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
-      setEditingDetails(prev => ({...prev, summaryPlan: null}));
-      setIsLoading(false);
-    }
-  }, [addMessage, confirmationTimer, editingDetails, user]);
 
   return {
     messages,
