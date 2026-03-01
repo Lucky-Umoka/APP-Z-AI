@@ -1,23 +1,20 @@
-
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
 import { Message, ConversationStep, ProcessingState, EditingDetails } from '@/lib/types';
+import { initializeFirebase, useUser } from '@/firebase';
+import { collection, doc, setDoc, serverTimestamp, addDoc, onSnapshot } from 'firebase/firestore';
+import { uploadVideoFile } from '@/lib/storage-utils';
+import { runSubmagicEdit } from '@/ai/flows/submagic-video-edit';
 
 let messageIdCounter = 0;
 const getUniqueId = () => `msg_${Date.now()}_${messageIdCounter++}`;
-
-const initialWelcomeMessage: Message = {
-  id: getUniqueId(),
-  role: 'assistant',
-  content: "Hi, I'm Zuckky AI, here to help you edit your videos to go viral. To get started, please give me some instructions or upload your footage.",
-  type: 'text'
-};
 
 const PROCESSING_STEP_DURATION = 1500;
 const TOTAL_PROCESSING_STEPS = 8;
 
 export function useConversation() {
+  const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationStep, setConversationStep] = useState<ConversationStep>(ConversationStep.WELCOME);
   const [isLoading, setIsLoading] = useState(false);
@@ -59,38 +56,6 @@ export function useConversation() {
     addMessage({ role: 'assistant', content: 'Great! Please upload your new footage and provide instructions.' });
   };
   
-  const handleFurtherInstructions = (userInput: string) => {
-    // If we just finished a video, and the user gives more instructions
-    if (conversationStep === ConversationStep.DONE) {
-      addMessage({ role: 'user', content: userInput });
-      // Reset relevant details but keep the context of the edited video
-      setEditingDetails(prev => ({
-        ...prev,
-        instructions: userInput, // This is the new instruction
-        customDetails: '', // Clear previous custom details
-        summaryPlan: null, // Clear old summary
-      }));
-      // Go back to the confirmation step
-      setConversationStep(ConversationStep.AWAITING_CONFIRMATION);
-      const summary = {
-          Topic: 'Further edits on the previous video.',
-          'Your Instructions': `"${userInput}"`,
-          'Previous Template': `"${editingDetails.template}"`,
-          'Action Plan': 'Apply new edits to the previously generated video.',
-      };
-      setEditingDetails(prev => ({ ...prev, summaryPlan: summary }));
-      addMessage({ 
-        role: 'assistant', 
-        content: '', 
-        type: 'confirmation',
-        summaryDetails: summary,
-      });
-
-      const timer = setTimeout(() => handleConfirmation(true), 60000);
-      setConfirmationTimer(timer);
-    }
-  };
-
   const sendMessage = useCallback(async (message: string, files?: File[]) => {
     setIsLoading(true);
 
@@ -99,7 +64,7 @@ export function useConversation() {
     }
     
     await simulateThinking();
-    const file = files?.[0]; // For now, we'll just handle the first file for logic flow
+    const file = files?.[0];
 
     switch (conversationStep) {
         case ConversationStep.WELCOME:
@@ -151,7 +116,7 @@ export function useConversation() {
             setEditingDetails(prev => ({ ...prev, summaryPlan: summary }));
             addMessage({ 
                 role: 'assistant', 
-                content: '', // Content is now handled by the SummaryCard
+                content: '', 
                 type: 'confirmation',
                 summaryDetails: summary
             });
@@ -170,17 +135,15 @@ export function useConversation() {
         case ConversationStep.DONE:
             if (message.toLowerCase().includes("new video")) {
                 resetForNewVideo();
-            } else {
-                handleFurtherInstructions(message);
             }
             break;
 
         default:
-            addMessage({ role: 'assistant', content: "I'm not sure how to handle that right now. You can try giving me new instructions or uploading a new video." });
+            addMessage({ role: 'assistant', content: "I'm not sure how to handle that right now." });
             break;
     }
     setIsLoading(false);
-  }, [conversationStep, addMessage, editingDetails]);
+  }, [conversationStep, addMessage, editingDetails, handleConfirmation]);
 
   const handleTemplateSelection = useCallback(async (template: string) => {
     setIsLoading(true);
@@ -208,76 +171,108 @@ export function useConversation() {
     if (confirmed) {
       addMessage({ role: 'user', content: 'Yes, proceed.' });
       await simulateThinking();
+      
+      if (!user) {
+        addMessage({ role: 'assistant', content: 'You need to be signed in to perform edits.', type: 'error' });
+        setIsLoading(false);
+        return;
+      }
+
       setConversationStep(ConversationStep.PROCESSING);
       
-      const fileToProcess = editingDetails.videoFile;
-      const videoUrl = fileToProcess ? URL.createObjectURL(fileToProcess) : null;
-      
-      const initialState: ProcessingState = {
-        videoUrl: videoUrl,
-        progress: 0,
-        currentStep: 0,
-      };
-      const processingMessageId = addMessage({ role: 'assistant', content: '', type: 'processing', processingState: initialState });
-  
-      const interval = setInterval(() => {
-        let shouldClear = false;
-        setMessages(prevMessages => {
-            const updatedMessages = prevMessages.map(msg => {
-                if (msg.id === processingMessageId && msg.processingState) {
-                    const nextStep = msg.processingState.currentStep + 1;
-                    if (nextStep > TOTAL_PROCESSING_STEPS) {
-                        shouldClear = true;
-                        return {
-                            ...msg,
-                            processingState: { ...msg.processingState, progress: 100 }
-                        };
-                    }
-                    const newProgress = (nextStep / TOTAL_PROCESSING_STEPS) * 100;
-                    return {
-                        ...msg,
-                        processingState: { ...msg.processingState, progress: newProgress, currentStep: nextStep, isCollapsibleOpen: true }
-                    };
-                }
-                return msg;
-            });
-            return updatedMessages;
+      try {
+        const { firestore } = initializeFirebase();
+        
+        // 1. Upload video to Storage
+        const videoFile = editingDetails.videoFile;
+        if (!videoFile) throw new Error('No video file selected.');
+        
+        const timestamp = Date.now();
+        const storagePath = `users/${user.uid}/videos/${timestamp}_${videoFile.name}`;
+        const publicUrl = await uploadVideoFile(videoFile, storagePath);
+
+        // 2. Create Conversation and Job in Firestore
+        // For prototype, we'll use a hardcoded conversation ID or generate one
+        const conversationId = 'conv_' + timestamp;
+        const jobId = 'job_' + timestamp;
+        
+        const jobRef = doc(firestore, `users/${user.uid}/conversations/${conversationId}/videoEditingJobs/${jobId}`);
+        await setDoc(jobRef, {
+          id: jobId,
+          userId: user.uid,
+          conversationId: conversationId,
+          originalMediaFileId: 'initial_upload',
+          customInstructions: editingDetails.instructions,
+          status: 'pending',
+          progress: 0,
+          currentStep: 0,
+          creditCost: 1,
+          createdAt: serverTimestamp(),
         });
 
-        if (shouldClear) {
-            clearInterval(interval);
-            setIsLoading(false);
-            setEditingDetails(prev => ({...prev, editedVideoUrl: videoUrl }));
+        // 3. Show processing state in UI
+        const initialState: ProcessingState = {
+          videoUrl: publicUrl,
+          progress: 0,
+          currentStep: 0,
+        };
+        const processingMessageId = addMessage({ role: 'assistant', content: '', type: 'processing', processingState: initialState });
 
-            // Post-completion sequence
-            setTimeout(() => {
-                // This triggers the view to hide details
-                updateMessage(processingMessageId, { processingState: { ...initialState, videoUrl, progress: 100, isCollapsibleOpen: false }});
-                
-                // Wait another 1.5s before opening canvas
-                setTimeout(() => {
-                    setCanvasOpen(true);
-                    setConversationStep(ConversationStep.DONE);
-                    addMessage({ role: 'assistant', content: 'Your video is ready. Let me know if you would like any changes or want to start a new project.' });
-                }, 1500);
-            }, 1500);
-        }
-      }, PROCESSING_STEP_DURATION);
+        // 4. Listen to the Firestore job document for updates from the backend
+        const unsubscribe = onSnapshot(jobRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            updateMessage(processingMessageId, {
+              processingState: {
+                ...initialState,
+                progress: data.progress || 0,
+                currentStep: Math.floor((data.progress || 0) / 12.5), // Estimate step based on progress
+                isCollapsibleOpen: data.status !== 'completed'
+              }
+            });
+
+            if (data.status === 'completed') {
+              unsubscribe();
+              setEditingDetails(prev => ({...prev, editedVideoUrl: data.editedVideoUrl }));
+              setCanvasOpen(true);
+              setConversationStep(ConversationStep.DONE);
+              addMessage({ role: 'assistant', content: 'Your video is ready. Review it in the preview canvas!', type: 'final-video' });
+              setIsLoading(false);
+            } else if (data.status === 'error') {
+              unsubscribe();
+              addMessage({ role: 'assistant', content: `Error: ${data.error || 'The editing process failed.'}`, type: 'error' });
+              setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
+              setIsLoading(false);
+            }
+          }
+        });
+
+        // 5. Trigger the Backend Genkit Flow (Async)
+        // We don't await this because the flow contains the 10-minute loop
+        runSubmagicEdit({
+          userId: user.uid,
+          conversationId: conversationId,
+          jobId: jobId,
+          videoUrl: publicUrl,
+          templateName: editingDetails.template
+        }).catch(err => {
+          console.error('Flow failed:', err);
+        });
+
+      } catch (error: any) {
+        addMessage({ role: 'assistant', content: `Something went wrong: ${error.message}`, type: 'error' });
+        setIsLoading(false);
+      }
   
     } else {
       addMessage({ role: 'user', content: newInstructions || 'No, I have changes.' });
       await simulateThinking();
       addMessage({ role: 'assistant', content: 'No problem. Please provide your updated instructions.' });
       setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
-      setEditingDetails(prev => ({...prev, summaryPlan: null})); // Clear old summary
+      setEditingDetails(prev => ({...prev, summaryPlan: null}));
       setIsLoading(false);
     }
-  }, [addMessage, confirmationTimer, editingDetails.videoFile]);
-
-  useEffect(() => {
-    // This effect now does nothing on initial load,
-    // allowing the Welcome screen to show on an empty message array.
-  }, []);
+  }, [addMessage, confirmationTimer, editingDetails, user]);
 
   return {
     messages,
