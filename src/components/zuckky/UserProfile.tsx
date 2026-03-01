@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CreditCard, LifeBuoy, LogOut, Settings, User, LogIn, UserPlus } from 'lucide-react';
+import { CreditCard, LifeBuoy, LogOut, Settings, User, LogIn } from 'lucide-react';
 import { useUser, useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
@@ -26,7 +27,7 @@ export function UserProfile() {
     router.push('/login');
   };
 
-  const isAnonymous = !user || user.isAnonymous;
+  const isLoggedIn = user && !user.isAnonymous;
 
   return (
     <DropdownMenu>
@@ -36,15 +37,15 @@ export function UserProfile() {
           className="flex h-auto w-full items-center justify-start gap-2 px-0 py-1"
         >
           <Avatar className="h-8 w-8">
-            <AvatarImage src={`https://picsum.photos/seed/${user?.uid || 'guest'}/40/40`} alt="User" />
+            <AvatarImage src={user?.photoURL || `https://picsum.photos/seed/${user?.uid || 'guest'}/40/40`} alt="User" />
             <AvatarFallback>{user?.email?.[0]?.toUpperCase() || 'G'}</AvatarFallback>
           </Avatar>
           <div className="text-left group-data-[collapsible=icon]:hidden">
             <p className="text-sm font-medium truncate max-w-[120px]">
-              {isAnonymous ? 'Guest User' : (user?.displayName || 'User')}
+              {isLoggedIn ? (user?.displayName || 'User') : 'Guest User'}
             </p>
             <p className="text-xs text-muted-foreground truncate max-w-[120px]">
-              {isAnonymous ? 'Sign in to save projects' : user?.email}
+              {isLoggedIn ? user?.email : 'Sign in with Google'}
             </p>
           </div>
         </Button>
@@ -53,24 +54,20 @@ export function UserProfile() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {isAnonymous ? 'Guest' : (user?.displayName || 'User')}
+              {isLoggedIn ? (user?.displayName || 'User') : 'Guest'}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
-              {user?.email || 'Anonymous Session'}
+              {user?.email || 'Not signed in'}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         
-        {isAnonymous ? (
+        {!isLoggedIn ? (
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => router.push('/login')}>
               <LogIn className="mr-2 h-4 w-4" />
-              <span>Log in</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push('/signup')}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              <span>Sign up</span>
+              <span>Log in with Google</span>
             </DropdownMenuItem>
           </DropdownMenuGroup>
         ) : (
@@ -96,7 +93,7 @@ export function UserProfile() {
           <span>Support</span>
         </DropdownMenuItem>
         
-        {!isAnonymous && (
+        {isLoggedIn && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>

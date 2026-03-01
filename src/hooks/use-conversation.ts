@@ -1,11 +1,13 @@
+
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
 import { Message, ConversationStep, ProcessingState, EditingDetails } from '@/lib/types';
-import { initializeFirebase, useUser, useAuth, initiateAnonymousSignIn } from '@/firebase';
+import { initializeFirebase, useUser, useAuth } from '@/firebase';
 import { collection, doc, setDoc, serverTimestamp, addDoc, onSnapshot } from 'firebase/firestore';
 import { uploadVideoFile } from '@/lib/storage-utils';
 import { runSubmagicEdit } from '@/ai/flows/submagic-video-edit';
+import { useRouter } from 'next/navigation';
 
 let messageIdCounter = 0;
 const getUniqueId = () => `msg_${Date.now()}_${messageIdCounter++}`;
@@ -16,6 +18,7 @@ const TOTAL_PROCESSING_STEPS = 8;
 export function useConversation() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationStep, setConversationStep] = useState<ConversationStep>(ConversationStep.WELCOME);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,13 +34,6 @@ export function useConversation() {
   const [isCanvasOpen, setCanvasOpen] = useState(false);
   const [confirmationTimer, setConfirmationTimer] = useState<NodeJS.Timeout | null>(null);
   
-  // Handle anonymous sign-in for the prototype
-  useEffect(() => {
-    if (!isUserLoading && !user && auth) {
-      initiateAnonymousSignIn(auth);
-    }
-  }, [user, isUserLoading, auth]);
-
   const updateMessage = (id: string, updates: Partial<Message>) => {
     setMessages(prev => prev.map(msg => msg.id === id ? { ...msg, ...updates } : msg));
   };
@@ -75,8 +71,8 @@ export function useConversation() {
       addMessage({ role: 'user', content: 'Yes, proceed.' });
       await simulateThinking();
       
-      if (!user) {
-        addMessage({ role: 'assistant', content: 'Connecting to services...', type: 'error' });
+      if (!user || user.isAnonymous) {
+        addMessage({ role: 'assistant', content: 'You need to be logged in with Google to start the editing process. Please sign in to continue.', type: 'error' });
         setIsLoading(false);
         return;
       }
@@ -181,6 +177,17 @@ export function useConversation() {
     if (message.trim() || (files && files.length > 0)) {
         addMessage({ role: 'user', content: message.trim(), attachments: files });
     }
+
+    // Auth check: User must be signed in (not anonymous) to continue
+    if (!user || user.isAnonymous) {
+      await simulateThinking(500);
+      addMessage({ 
+        role: 'assistant', 
+        content: 'I\'d love to help you with that! Please log in with your Google account so I can save your progress and start editing your videos.' 
+      });
+      setIsLoading(false);
+      return;
+    }
     
     await simulateThinking();
     const file = files?.[0];
@@ -262,7 +269,7 @@ export function useConversation() {
             break;
     }
     setIsLoading(false);
-  }, [conversationStep, addMessage, editingDetails, handleConfirmation]);
+  }, [conversationStep, addMessage, editingDetails, handleConfirmation, user]);
 
   const handleTemplateSelection = useCallback(async (template: string) => {
     setIsLoading(true);
