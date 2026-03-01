@@ -1,81 +1,82 @@
 {
   "entities": {
-    "UserProfile": {
+    "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserProfile",
+      "title": "User",
       "type": "object",
-      "description": "Represents a user of the Zuckky AI platform, storing their profile information and usage metrics.",
+      "description": "Represents a user of the Zuckky AI application, storing their profile and credit balance.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the UserProfile entity."
+          "description": "Unique identifier for the User entity."
         },
         "email": {
           "type": "string",
-          "description": "The user's email address.",
+          "description": "The user's email address, used for identification and communication. (Relationship: User 1:N Conversation, User 1:N MediaFile, User 1:N CreditTransaction)",
           "format": "email"
         },
-        "displayName": {
+        "name": {
           "type": "string",
-          "description": "The user's display name."
+          "description": "The display name of the user."
         },
-        "credits": {
+        "currentCreditBalance": {
           "type": "number",
-          "description": "The number of video editing credits available to the user."
+          "description": "The current number of editing credits available to the user."
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp when the user profile was created.",
+          "description": "Timestamp indicating when the user account was created.",
           "format": "date-time"
         },
-        "lastActiveAt": {
+        "updatedAt": {
           "type": "string",
-          "description": "Timestamp of the user's last activity on the platform.",
+          "description": "Timestamp indicating when the user account was last updated.",
           "format": "date-time"
         }
       },
       "required": [
         "id",
         "email",
-        "displayName",
-        "credits",
-        "createdAt"
+        "name",
+        "currentCreditBalance",
+        "createdAt",
+        "updatedAt"
       ]
     },
-    "ChatSession": {
+    "Conversation": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ChatSession",
+      "title": "Conversation",
       "type": "object",
-      "description": "Represents a single conversational thread between a user and Zuckky AI, maintaining context for video editing projects.",
+      "description": "Represents a single chat session or project where a user interacts with Zuckky AI for video editing.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the ChatSession entity."
+          "description": "Unique identifier for the Conversation entity."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the UserProfile who owns this chat session. (Relationship: UserProfile 1:N ChatSession)"
+          "description": "Reference to the User who owns this conversation. (Relationship: User 1:N Conversation)"
         },
         "title": {
           "type": "string",
-          "description": "A user-defined or auto-generated title for the chat session, e.g., 'Hormozi style video'."
+          "description": "A user-defined or system-generated title for the conversation, e.g., 'My first project'."
         },
         "currentStep": {
           "type": "string",
-          "description": "The current step in the guided 8-step video editing workflow (e.g., 'WELCOME', 'UPLOAD_FOOTAGE', 'TEMPLATE_SELECTION')."
+          "description": "The current step in the conversation flow (e.g., 'WELCOME', 'UPLOAD_FOOTAGE', 'SELECT_TEMPLATE', 'AWAITING_CONFIRMATION', 'EDITING_PROCESSING', 'COMPLETED')."
         },
-        "currentVideoProjectId": {
+        "activeVideoEditingJobId": {
           "type": "string",
-          "description": "Optional reference to the VideoProject currently being worked on or discussed within this chat session. (Relationship: VideoProject 1:1 ChatSession)"
+          "description": "Optional: Reference to the currently active video editing job within this conversation, if any. (Relationship: Conversation 1:1 VideoEditingJob)"
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp when the chat session was created.",
+          "description": "Timestamp indicating when the conversation was created.",
           "format": "date-time"
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp when the chat session was last updated.",
+          "description": "Timestamp indicating when the conversation was last updated.",
           "format": "date-time"
         }
       },
@@ -92,176 +93,351 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Message",
       "type": "object",
-      "description": "Stores individual messages exchanged within a ChatSession, distinguishing between user input and AI responses.",
+      "description": "Represents an individual message exchanged within a conversation, either from the user or the AI.",
       "properties": {
         "id": {
           "type": "string",
           "description": "Unique identifier for the Message entity."
         },
-        "chatSessionId": {
+        "conversationId": {
           "type": "string",
-          "description": "Reference to the ChatSession this message belongs to. (Relationship: ChatSession 1:N Message)"
+          "description": "Reference to the Conversation this message belongs to. (Relationship: Conversation 1:N Message)"
         },
-        "sender": {
+        "senderType": {
           "type": "string",
-          "description": "Indicates who sent the message: 'user' or 'ai'."
-        },
-        "content": {
-          "type": "string",
-          "description": "The text content of the message."
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "Timestamp when the message was sent or received.",
-          "format": "date-time"
-        },
-        "metadata": {
-          "type": "string",
-          "description": "Optional JSON string for additional structured data related to the message, e.g., AI action triggers or user selections."
-        }
-      },
-      "required": [
-        "id",
-        "chatSessionId",
-        "sender",
-        "content",
-        "timestamp"
-      ]
-    },
-    "VideoProject": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "VideoProject",
-      "type": "object",
-      "description": "Details about a specific video editing project, including its source footage, Submagic API references, and current processing status.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the VideoProject entity."
-        },
-        "chatSessionId": {
-          "type": "string",
-          "description": "Reference to the ChatSession where this video project was initiated. (Relationship: ChatSession 1:1 VideoProject)"
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to the UserProfile who owns this video project. (Relationship: UserProfile 1:N VideoProject)"
-        },
-        "originalVideoUrl": {
-          "type": "string",
-          "description": "URL of the unedited video footage uploaded by the user.",
-          "format": "uri"
-        },
-        "submagicProjectId": {
-          "type": "string",
-          "description": "The unique project ID returned by the Submagic API for this video editing request."
-        },
-        "status": {
-          "type": "string",
-          "description": "Current status of the video editing process (e.g., 'initiated', 'processing', 'completed', 'failed', 'transcribing', 'exporting')."
-        },
-        "templateName": {
-          "type": "string",
-          "description": "The name of the editing template chosen by the user (e.g., 'Hormozi', 'Gadzhi', 'Custom')."
-        },
-        "editingInstructions": {
-          "type": "string",
-          "description": "Additional free-text instructions provided by the user for the video editing."
-        },
-        "magicZooms": {
-          "type": "boolean",
-          "description": "Indicates whether 'magic zooms' feature was requested for this video."
-        },
-        "magicBrolls": {
-          "type": "boolean",
-          "description": "Indicates whether 'magic B-rolls' feature was requested for this video."
-        },
-        "downloadUrl": {
-          "type": "string",
-          "description": "URL of the final edited video available for download.",
-          "format": "uri"
-        },
-        "previewUrl": {
-          "type": "string",
-          "description": "URL of the preview for the edited video.",
-          "format": "uri"
-        },
-        "processingSteps": {
-          "type": "array",
-          "description": "An ordered list of steps indicating the progress of the video processing, displayed to the user.",
+          "description": "Indicates whether the message was sent by the 'user' or the 'ai'.",
           "items": {
             "type": "string"
           }
         },
-        "createdAt": {
+        "contentType": {
           "type": "string",
-          "description": "Timestamp when the video project was created.",
+          "description": "The type of content the message represents (e.g., 'text', 'file_reference', 'template_selection', 'summary_request', 'processing_progress', 'edited_video_reference').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string",
+          "description": "The textual content of the message."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp indicating when the message was sent or received.",
           "format": "date-time"
         },
-        "updatedAt": {
+        "mediaFileId": {
           "type": "string",
-          "description": "Timestamp when the video project's status or details were last updated.",
+          "description": "Optional: Reference to a MediaFile if the message includes an uploaded file. (Relationship: Message 1:1 MediaFile)"
+        },
+        "editedVideoId": {
+          "type": "string",
+          "description": "Optional: Reference to an EditedVideo if the message includes a preview of a finished video. (Relationship: Message 1:1 EditedVideo)"
+        },
+        "templateId": {
+          "type": "string",
+          "description": "Optional: Reference to a Template if the message indicates a template selection. (Relationship: Message 1:1 Template)"
+        }
+      },
+      "required": [
+        "id",
+        "conversationId",
+        "senderType",
+        "contentType",
+        "text",
+        "timestamp"
+      ]
+    },
+    "MediaFile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MediaFile",
+      "type": "object",
+      "description": "Stores metadata about a video file uploaded by a user for editing.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MediaFile entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who uploaded this file. (Relationship: User 1:N MediaFile)"
+        },
+        "conversationId": {
+          "type": "string",
+          "description": "Reference to the Conversation in which this file was uploaded. (Relationship: Conversation 1:N MediaFile)"
+        },
+        "originalFileName": {
+          "type": "string",
+          "description": "The original name of the file as uploaded by the user."
+        },
+        "storageUrl": {
+          "type": "string",
+          "description": "The URL or path where the original video file is stored (e.g., S3 URL).",
+          "format": "uri"
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "The MIME type of the uploaded file (e.g., 'video/mp4')."
+        },
+        "sizeBytes": {
+          "type": "number",
+          "description": "The size of the uploaded file in bytes."
+        },
+        "durationSeconds": {
+          "type": "number",
+          "description": "The duration of the video file in seconds."
+        },
+        "uploadTimestamp": {
+          "type": "string",
+          "description": "Timestamp indicating when the file was uploaded.",
+          "format": "date-time"
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "description": "URL to a small preview thumbnail image generated from the video.",
+          "format": "uri"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the media file (e.g., 'uploaded', 'processing_thumbnail', 'ready', 'failed').",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "conversationId",
+        "originalFileName",
+        "storageUrl",
+        "mimeType",
+        "sizeBytes",
+        "uploadTimestamp",
+        "thumbnailUrl",
+        "status"
+      ]
+    },
+    "VideoEditingJob": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "VideoEditingJob",
+      "type": "object",
+      "description": "Represents a single request for video editing, linking an original media file to specific instructions and resulting in an edited video.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the VideoEditingJob entity."
+        },
+        "conversationId": {
+          "type": "string",
+          "description": "Reference to the Conversation that initiated this editing job. (Relationship: Conversation 1:N VideoEditingJob)"
+        },
+        "originalMediaFileId": {
+          "type": "string",
+          "description": "Reference to the MediaFile (original footage) being edited in this job. (Relationship: VideoEditingJob 1:1 MediaFile)"
+        },
+        "templateId": {
+          "type": "string",
+          "description": "Optional: Reference to the Template chosen for this editing job. (Relationship: VideoEditingJob 1:1 Template)"
+        },
+        "customInstructions": {
+          "type": "string",
+          "description": "A comprehensive string containing all AI editing instructions gathered from the user for this job."
+        },
+        "customTrainingData": {
+          "type": "string",
+          "description": "Optional: Specific data or reference used for custom training in this job, if applicable."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the video editing job (e.g., 'pending', 'analyzing', 'processing', 'completed', 'failed', 'cancelled').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "progressDetails": {
+          "type": "array",
+          "description": "An array of objects detailing the sequential steps of the editing process with their status.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "startedAt": {
+          "type": "string",
+          "description": "Optional: Timestamp indicating when the video editing process officially started.",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "Optional: Timestamp indicating when the video editing process was completed.",
+          "format": "date-time"
+        },
+        "editedVideoId": {
+          "type": "string",
+          "description": "Optional: Reference to the EditedVideo entity created by this job, once completed. (Relationship: VideoEditingJob 1:1 EditedVideo)"
+        },
+        "creditCost": {
+          "type": "number",
+          "description": "The number of credits consumed by this video editing job."
+        }
+      },
+      "required": [
+        "id",
+        "conversationId",
+        "originalMediaFileId",
+        "customInstructions",
+        "status",
+        "progressDetails",
+        "creditCost"
+      ]
+    },
+    "EditedVideo": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EditedVideo",
+      "type": "object",
+      "description": "Represents a video that has been processed and edited by Zuckky AI, ready for preview and download.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the EditedVideo entity."
+        },
+        "videoEditingJobId": {
+          "type": "string",
+          "description": "Reference to the VideoEditingJob that produced this edited video. (Relationship: EditedVideo 1:1 VideoEditingJob)"
+        },
+        "storageUrl": {
+          "type": "string",
+          "description": "The URL or path where the final edited video file is stored.",
+          "format": "uri"
+        },
+        "previewThumbnailUrl": {
+          "type": "string",
+          "description": "URL to a preview image or a short clip of the edited video.",
+          "format": "uri"
+        },
+        "durationSeconds": {
+          "type": "number",
+          "description": "The duration of the edited video in seconds."
+        },
+        "fileSizeBytes": {
+          "type": "number",
+          "description": "The size of the edited video file in bytes."
+        },
+        "qualityOptions": {
+          "type": "array",
+          "description": "An array of available download quality options for this video (e.g., '1080p', '720p').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "downloadCount": {
+          "type": "number",
+          "description": "The number of times this edited video has been downloaded."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the edited video was created.",
           "format": "date-time"
         }
       },
       "required": [
         "id",
-        "chatSessionId",
-        "userId",
-        "originalVideoUrl",
-        "submagicProjectId",
-        "status",
-        "templateName",
-        "magicZooms",
-        "magicBrolls",
-        "createdAt",
-        "updatedAt"
+        "videoEditingJobId",
+        "storageUrl",
+        "previewThumbnailUrl",
+        "durationSeconds",
+        "fileSizeBytes",
+        "qualityOptions",
+        "downloadCount",
+        "createdAt"
       ]
     },
-    "VideoTemplate": {
+    "Template": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "VideoTemplate",
+      "title": "Template",
       "type": "object",
-      "description": "Defines available video editing templates that users can select, mapping to Submagic API templates.",
+      "description": "Defines a predefined video editing style or set of configurations that users can select.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the VideoTemplate entity."
+          "description": "Unique identifier for the Template entity."
         },
         "name": {
           "type": "string",
-          "description": "A user-friendly name for the template (e.g., 'Hormozi', 'Gadzhi', 'Gary Vee', 'Custom')."
+          "description": "The name of the template (e.g., 'Hormozi', 'Gadzhi', 'Gary Vee', 'Custom')."
         },
         "description": {
           "type": "string",
-          "description": "A brief description of the template's style or characteristics."
+          "description": "A brief description of the editing style and characteristics of the template."
         },
-        "submagicTemplateName": {
+        "configurationJson": {
           "type": "string",
-          "description": "The exact template name or identifier used by the Submagic API."
+          "description": "A JSON string containing the specific parameters and configurations for this template, compatible with the editing API (e.g., Submagic)."
         },
-        "isCustomizable": {
+        "isActive": {
           "type": "boolean",
-          "description": "Indicates if this template allows for additional custom instructions or training."
+          "description": "Indicates whether this template is currently available for users to select."
         },
-        "createdAt": {
+        "thumbnailUrl": {
           "type": "string",
-          "description": "Timestamp when the template definition was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the template definition was last updated.",
-          "format": "date-time"
+          "description": "Optional: URL to an image or video showcasing the visual style of the template.",
+          "format": "uri"
         }
       },
       "required": [
         "id",
         "name",
         "description",
-        "submagicTemplateName",
-        "isCustomizable",
-        "createdAt",
-        "updatedAt"
+        "configurationJson",
+        "isActive"
+      ]
+    },
+    "CreditTransaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CreditTransaction",
+      "type": "object",
+      "description": "Records individual credit changes (grants or deductions) for a user's account.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CreditTransaction entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User involved in this transaction. (Relationship: User 1:N CreditTransaction)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The number of credits added (positive) or deducted (negative) in this transaction."
+        },
+        "transactionType": {
+          "type": "string",
+          "description": "The type of credit transaction (e.g., 'purchase', 'video_edit_cost', 'admin_grant', 'refund', 'subscription_renewal').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "referenceId": {
+          "type": "string",
+          "description": "Optional: Reference ID to another entity relevant to this transaction (e.g., VideoEditingJob ID for 'video_edit_cost')."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp indicating when the credit transaction occurred.",
+          "format": "date-time"
+        },
+        "description": {
+          "type": "string",
+          "description": "A human-readable description of the transaction."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "amount",
+        "transactionType",
+        "timestamp",
+        "description"
       ]
     }
   },
@@ -276,94 +452,166 @@
       {
         "path": "/users/{userId}",
         "definition": {
-          "entityName": "UserProfile",
+          "entityName": "User",
           "schema": {
-            "$ref": "#/backend/entities/UserProfile"
+            "$ref": "#/backend/entities/User"
           },
-          "description": "Stores individual user profiles. Documents are identified by the user's Firebase Authentication UID. Authorization is path-based: `request.auth.uid` must match `userId`."
+          "description": "Stores user profiles. Ownership is path-based; the document's ID (`userId`) must match the authenticated user's UID (`request.auth.uid`)."
         }
       },
       {
-        "path": "/users/{userId}/chatSessions/{chatSessionId}",
+        "path": "/users/{userId}/conversations/{conversationId}",
         "definition": {
-          "entityName": "ChatSession",
+          "entityName": "Conversation",
           "schema": {
-            "$ref": "#/backend/entities/ChatSession"
+            "$ref": "#/backend/entities/Conversation"
           },
-          "description": "Contains individual chat sessions belonging to a specific user. Includes denormalized `userId` field for authorization independence, ensuring `request.auth.uid` matches the document's `userId` field.",
+          "description": "Stores individual chat sessions or projects for a user. Includes denormalized 'userId' for authorization independence, ensuring `request.auth.uid` matches both the path and `resource.data.userId`.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user who owns this chat session."
+              "description": "The ID of the user who owns the conversation."
             },
             {
-              "name": "chatSessionId",
-              "description": "The unique identifier for the chat session."
+              "name": "conversationId",
+              "description": "The unique ID of the conversation."
             }
           ]
         }
       },
       {
-        "path": "/users/{userId}/chatSessions/{chatSessionId}/messages/{messageId}",
+        "path": "/users/{userId}/conversations/{conversationId}/messages/{messageId}",
         "definition": {
           "entityName": "Message",
           "schema": {
             "$ref": "#/backend/entities/Message"
           },
-          "description": "Stores individual messages within a chat session. Includes denormalized `userId` field (from the parent ChatSession) for authorization independence, ensuring `request.auth.uid` matches the document's `userId` field.",
+          "description": "Stores individual messages within a specific conversation. For authorization independence, documents must include denormalized 'userId' and 'conversationId' fields to match the path and `request.auth.uid`.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user who owns the parent chat session."
+              "description": "The ID of the user who owns the parent conversation."
             },
             {
-              "name": "chatSessionId",
-              "description": "The unique identifier of the parent chat session."
+              "name": "conversationId",
+              "description": "The ID of the parent conversation."
             },
             {
               "name": "messageId",
-              "description": "The unique identifier for the message."
+              "description": "The unique ID of the message."
             }
           ]
         }
       },
       {
-        "path": "/users/{userId}/videoProjects/{videoProjectId}",
+        "path": "/users/{userId}/conversations/{conversationId}/mediaFiles/{mediaFileId}",
         "definition": {
-          "entityName": "VideoProject",
+          "entityName": "MediaFile",
           "schema": {
-            "$ref": "#/backend/entities/VideoProject"
+            "$ref": "#/backend/entities/MediaFile"
           },
-          "description": "Details about a specific video editing project owned by a user. Includes denormalized `userId` field for authorization independence, ensuring `request.auth.uid` matches the document's `userId` field.",
+          "description": "Stores metadata about video files uploaded within a specific conversation. For authorization independence, documents must include denormalized 'userId' and 'conversationId' fields to match the path and `request.auth.uid`.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user who owns this video project."
+              "description": "The ID of the user who owns the parent conversation."
             },
             {
-              "name": "videoProjectId",
-              "description": "The unique identifier for the video project."
+              "name": "conversationId",
+              "description": "The ID of the parent conversation."
+            },
+            {
+              "name": "mediaFileId",
+              "description": "The unique ID of the uploaded media file."
             }
           ]
         }
       },
       {
-        "path": "/videoTemplates/{templateId}",
+        "path": "/users/{userId}/conversations/{conversationId}/videoEditingJobs/{jobId}",
         "definition": {
-          "entityName": "VideoTemplate",
+          "entityName": "VideoEditingJob",
           "schema": {
-            "$ref": "#/backend/entities/VideoTemplate"
+            "$ref": "#/backend/entities/VideoEditingJob"
           },
-          "description": "Defines available global video editing templates. These are generally read-only for users and managed by administrators.",
+          "description": "Stores details for individual video editing requests initiated within a conversation. For authorization independence, documents must include denormalized 'userId' and 'conversationId' fields to match the path and `request.auth.uid`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the parent conversation."
+            },
+            {
+              "name": "conversationId",
+              "description": "The ID of the parent conversation."
+            },
+            {
+              "name": "jobId",
+              "description": "The unique ID of the video editing job."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/conversations/{conversationId}/editedVideos/{editedVideoId}",
+        "definition": {
+          "entityName": "EditedVideo",
+          "schema": {
+            "$ref": "#/backend/entities/EditedVideo"
+          },
+          "description": "Stores metadata for AI-edited videos resulting from a specific video editing job. For authorization independence, documents must include denormalized 'userId' and 'conversationId' fields to match the path and `request.auth.uid`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the parent conversation."
+            },
+            {
+              "name": "conversationId",
+              "description": "The ID of the parent conversation."
+            },
+            {
+              "name": "editedVideoId",
+              "description": "The unique ID of the edited video."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/creditTransactions/{transactionId}",
+        "definition": {
+          "entityName": "CreditTransaction",
+          "schema": {
+            "$ref": "#/backend/entities/CreditTransaction"
+          },
+          "description": "Records individual credit changes (grants or deductions) for a user's account. Documents include denormalized 'userId' for authorization independence, ensuring `request.auth.uid` matches both the path and `resource.data.userId`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user associated with the transaction."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique ID of the credit transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/templates/{templateId}",
+        "definition": {
+          "entityName": "Template",
+          "schema": {
+            "$ref": "#/backend/entities/Template"
+          },
+          "description": "Stores global, predefined video editing templates available to all authenticated users. These are read-only for users, with write access restricted to administrators (not defined in this scope).",
           "params": [
             {
               "name": "templateId",
-              "description": "The unique identifier for the video template."
+              "description": "The unique ID of the video editing template."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore data structure for Zuckky AI is designed to prioritize Authorization Independence, Debuggability, and support for QAPs (queryable and secure list operations) as mandated. It follows a user-centric hierarchical model for private data and a dedicated top-level collection for global, read-only data.\n\n**Authorization Independence via Denormalization:**\n- For `UserProfile` documents at `/users/{userId}`, the document `id` directly matches the `userId` from the path and `request.auth.uid`. No further denormalization for authorization is needed within the document itself, as ownership is implicit in the path.\n- For `ChatSession` documents at `/users/{userId}/chatSessions/{chatSessionId}`, the `ChatSession` entity's schema already includes `userId`. This `userId` field in the document will store the owner's UID, matching the `{userId}` wildcard in the path. This denormalization ensures that rules can directly check `request.auth.uid == resource.data.userId` without needing a `get()` call to a parent `UserProfile` document. This also enables atomic creation of a user and their initial chat session.\n- For `Message` documents at `/users/{userId}/chatSessions/{chatSessionId}/messages/{messageId}`, the `Message` entity's schema includes `chatSessionId`. To achieve authorization independence and avoid `get()` calls to the parent `ChatSession`, each `Message` document will also explicitly store its `userId` (owner's UID) directly within the document. This `userId` will match the `{userId}` wildcard in the path, allowing direct authorization checks: `request.auth.uid == resource.data.userId`.\n- For `VideoProject` documents at `/users/{userId}/videoProjects/{videoProjectId}`, the `VideoProject` entity's schema already includes `userId`. This `userId` field in the document will store the owner's UID, matching the `{userId}` wildcard in the path. This enables direct authorization checks: `request.auth.uid == resource.data.userId`.\n\nThis systematic denormalization of the `userId` into all user-owned subcollection documents ensures that security rules are simple (`allow read, write: if request.auth.uid == resource.data.userId;`), robust, and avoid costly and complex `get()` operations. This also simplifies atomic operations as parent data is not needed for authorization.\n\n**QAPs (Queryable and Secure List Operations):**\n- **Structural Segregation:** All user-specific data (`UserProfile`, `ChatSession`, `Message`, `VideoProject`) is nested under `/users/{userId}`. This structure inherently ensures that `list` queries on these collections are scoped to the authenticated user (`request.auth.uid`), making them secure by design. For example, a user can only `list` their own chat sessions by querying `/users/{request.auth.uid}/chatSessions`. Firestore rules can enforce that the `{userId}` wildcard in the path matches `request.auth.uid`.\n- The `VideoTemplate` collection is a top-level collection (`/videoTemplates/{templateId}`). Since these are global templates, they will be publicly readable (for all authenticated users) but restricted for writing (e.g., only by an administrator via Cloud Functions or explicit admin roles if implemented). This segregation prevents mixing public/global data with private user data, simplifying rules and access patterns for different data types."
+    "reasoning": "The Firestore structure for Zuckky AI is designed to prioritize Authorization Independence, Debuggability, and Queryable Access Patterns (QAPs) in alignment with the core design principles. The primary strategy employed is **Authorization Independence via Denormalization** (Mandate A) for all user-owned data, and **Structural Segregation** (Mandate B) for global data.\n\n**Authorization Independence (CRITICAL):**\nFor all user-specific data, the `userId` (`request.auth.uid`) is directly embedded into the document, even for deeply nested subcollections like `messages`, `videoEditingJobs`, and `editedVideos`. This eliminates the need for expensive and complex `get()` calls to parent documents within security rules. For example, a `Message` document will not only reside under `/users/{userId}/conversations/{conversationId}/messages/{messageId}` but will also contain a `userId` field (and `conversationId` field) within its own data. This allows rules to simply check `request.auth.uid == resource.data.userId` and `resource.data.conversationId == conversationId` (from the path), ensuring atomic operations and simplified rule logic.\n\n**QAPs (Rules are not Filters):**\n1.  **Path-Based Ownership:** User-specific data is organized hierarchically under `/users/{userId}/...`. This automatically scopes `list` operations. When a user queries `/users/{theirUid}/conversations`, Firestore's implicit filtering (due to path structure) ensures they only see their own conversations. Similarly, for `/users/{theirUid}/conversations/{conversationId}/messages`, they can only retrieve messages belonging to their conversation within their user context.\n2.  **Structural Segregation:** Global entities like `Templates` are placed in a top-level collection (`/templates`). This allows for simple, broad read rules (e.g., `allow read: if request.auth != null;`) without complex filtering logic, as all documents in this collection share the same security posture.\n\n**Design Justification:**\n*   **User-Owned Data:** The hierarchy `/users/{userId}/conversations/{conversationId}/messages/{messageId}` provides clear ownership. By denormalizing `userId` and `conversationId` into `Message`, `MediaFile`, `VideoEditingJob`, and `EditedVideo` documents, we achieve complete authorization independence. This means a rule for a `Message` can verify ownership (`request.auth.uid == resource.data.userId`) without having to traverse up to the `Conversation` or `User` document.\n*   **Global Data:** `Templates` are system-wide. A flat collection `/templates` provides efficient global access for users to browse available templates, with simple read rules.\n*   **Credit Transactions:** `/users/{userId}/creditTransactions/{transactionId}` cleanly segregates financial history for each user, with direct `userId` ownership for easy rule implementation.\n*   **Explicit State Modeling:** Entities like `Conversation` (with `currentStep`) and `MediaFile`/`VideoEditingJob` (with `status`) use dedicated fields to represent their state, simplifying business logic and rule conditions.\n*   **Radical Consistency:** Wildcards are descriptive (e.g., `{userId}`, `{conversationId}`). Authorization fields are standardized (e.g., `userId`)."
   }
 }

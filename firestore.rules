@@ -3,129 +3,165 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * ZUCKKY AI SECURITY RULES (PROTOTYPING MODE)
-     *
-     * Core Philosophy:
-     * This ruleset implements a strict user-ownership model. All user-generated content 
-     * (profiles, chat sessions, messages, and video projects) is nested within a 
-     * user-specific path /users/{userId}. Access is granted only if the authenticated 
-     * user's UID matches the {userId} in the path.
-     *
+     * ZUCKKY AI SECURITY RULES
+     * 
+     * Core Philosophy: 
+     * This ruleset enforces a strict user-ownership model. All user-specific data is hierarchically 
+     * nested under a unique user path to ensure natural isolation and efficient querying. 
+     * We utilize denormalized 'userId' and 'conversationId' fields to allow for atomic, 
+     * high-performance authorization checks without requiring additional database lookups.
+     * 
      * Data Structure:
-     * - /users/{userId}: Root profile for the user.
-     * - /users/{userId}/chatSessions/{sessionId}: Conversations managed by the user.
-     * - /users/{userId}/chatSessions/{sessionId}/messages/{msgId}: Individual message logs.
-     * - /users/{userId}/videoProjects/{projectId}: Metadata for Submagic video edits.
-     * - /videoTemplates/{templateId}: Global, read-only template library.
-     *
+     * - /users/{userId}: Private user profiles and the root of the ownership tree.
+     * - /users/{userId}/conversations/...: Nested data for chat sessions, media, and jobs.
+     * - /templates: Global, read-only configuration data for video styles.
+     * 
      * Key Security Decisions:
-     * 1. Path-Based Authorization: The primary security barrier is the {userId} wildcard.
-     * 2. Denormalization for Authorization: Critical fields like 'userId' are required 
-     *    inside documents to ensure relational integrity and permit efficient rules 
-     *    without using get() calls.
-     * 3. Read-Only Global Data: Video templates are accessible to all signed-in users 
-     *    but cannot be modified via the client.
-     * 4. State Safety: Update and delete operations strictly verify the document's 
-     *    existence and ownership before proceeding.
+     * 1. Path-Based Authorization: The UID in the document path must always match the authenticated user's UID.
+     * 2. Prototyping Flexibility: While authorization is strictly enforced (who can access), 
+     *    data schema validation (types and shapes) is omitted to allow for rapid frontend iteration.
+     * 3. Relational Integrity: On creation and update, rules ensure that internal ownership 
+     *    fields (like 'userId') remain consistent with the document path and authenticated identity.
+     * 4. Admin Restrictions: Collections like 'templates' are restricted to read-only for users.
      */
 
-    // --- GLOBAL HELPER FUNCTIONS ---
+    // --- HELPER FUNCTIONS ---
 
-    /**
-     * @description Checks if the user is authenticated.
-     */
+    /** @description Checks if the request is from a signed-in user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * @description Checks if the authenticated user's UID matches the provided ID.
-     */
+    /** @description Checks if the authenticated user's UID matches the provided userId. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Verifies ownership and ensures the document exists for mutation.
-     */
+    /** @description Checks ownership and ensures the document exists for update/delete. */
     function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+      return resource != null && isOwner(userId);
     }
 
-    /**
-     * @description Ensures a field is not changed during an update.
-     */
-    function isImmutable(field) {
-      return request.resource.data[field] == resource.data[field];
+    /** @description Validates that the data being written has the correct userId link. */
+    function isValidUserLink(userId) {
+      return request.resource.data.userId == userId;
+    }
+
+    /** @description Validates that the data being written has the correct conversationId link. */
+    function isValidConversationLink(conversationId) {
+      return request.resource.data.conversationId == conversationId;
     }
 
     // --- COLLECTION RULES ---
 
     /**
-     * @description User Profile rules. Users can manage their own profile.
+     * @description Rules for the User profile. Only the user themselves can read or write their profile.
      * @path /users/{userId}
-     * @allow (create) User 'abc' creates document /users/abc.
-     * @deny (get) User 'abc' attempts to read /users/xyz.
-     * @principle Ownership: Restricts access to a user's own data tree.
+     * @allow (create) if auth.uid matches {userId}.
+     * @deny (read) if auth.uid does not match {userId}.
+     * @principle Self-creation and strict path-based ownership.
      */
     match /users/{userId} {
       allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update, delete: if isExistingOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == userId;
+      allow delete: if isExistingOwner(userId);
 
       /**
-       * @description Chat Session rules. Sessions are private to the owner.
-       * @path /users/{userId}/chatSessions/{chatSessionId}
-       * @allow (create) User 'abc' starts a chat with userId 'abc' in data.
-       * @deny (create) User 'abc' attempts to create session with userId 'xyz'.
-       * @principle Relational Integrity: Enforces that the internal userId matches the path.
+       * @description Rules for Conversations. A user owns all conversations under their path.
+       * @path /users/{userId}/conversations/{conversationId}
+       * @allow (list) if request.auth.uid == {userId}.
+       * @deny (create) if the internal 'userId' field does not match the path.
+       * @principle Denormalization for authorization independence.
        */
-      match /chatSessions/{chatSessionId} {
+      match /conversations/{conversationId} {
         allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && isImmutable('userId');
+        allow create: if isOwner(userId) && isValidUserLink(userId);
+        allow update: if isExistingOwner(userId) && isValidUserLink(userId);
         allow delete: if isExistingOwner(userId);
 
         /**
-         * @description Message rules. Stores the conversation history.
-         * @path /users/{userId}/chatSessions/{chatSessionId}/messages/{messageId}
-         * @allow (list) User 'abc' retrieves messages from their own session.
-         * @deny (update) User 'abc' tries to edit a message they don't own.
-         * @principle Authorization Independence: Uses parent path wildcard for fast checks.
+         * @description Rules for Messages within a conversation.
+         * @path /users/{userId}/conversations/{conversationId}/messages/{messageId}
+         * @allow (create) if the message's userId and conversationId match the path context.
+         * @deny (update) if a user attempts to change the ownership field.
+         * @principle Relational integrity and hierarchical access control.
          */
         match /messages/{messageId} {
           allow get, list: if isOwner(userId);
-          allow create: if isOwner(userId) && request.resource.data.chatSessionId == chatSessionId;
-          allow update: if isExistingOwner(userId);
+          allow create: if isOwner(userId) && isValidUserLink(userId) && isValidConversationLink(conversationId);
+          allow update: if isExistingOwner(userId) && isValidUserLink(userId) && isValidConversationLink(conversationId);
+          allow delete: if isExistingOwner(userId);
+        }
+
+        /**
+         * @description Rules for MediaFiles (original footage) uploaded in a conversation.
+         * @path /users/{userId}/conversations/{conversationId}/mediaFiles/{mediaFileId}
+         * @allow (get) if the authenticated user is the path owner.
+         * @deny (create) if the uploaded metadata points to a different user.
+         * @principle Path-based isolation for sensitive media metadata.
+         */
+        match /mediaFiles/{mediaFileId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && isValidUserLink(userId) && isValidConversationLink(conversationId);
+          allow update: if isExistingOwner(userId) && isValidUserLink(userId) && isValidConversationLink(conversationId);
+          allow delete: if isExistingOwner(userId);
+        }
+
+        /**
+         * @description Rules for VideoEditingJobs. Tracks the status of AI processing.
+         * @path /users/{userId}/conversations/{conversationId}/videoEditingJobs/{jobId}
+         * @allow (update) if the owner is updating progress or status.
+         * @deny (list) if the user is not the owner of the path.
+         * @principle Resource-specific tracking within a user's private tree.
+         */
+        match /videoEditingJobs/{jobId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && isValidUserLink(userId) && isValidConversationLink(conversationId);
+          allow update: if isExistingOwner(userId) && isValidUserLink(userId) && isValidConversationLink(conversationId);
+          allow delete: if isExistingOwner(userId);
+        }
+
+        /**
+         * @description Rules for EditedVideos. Metadata for results of editing jobs.
+         * @path /users/{userId}/conversations/{conversationId}/editedVideos/{editedVideoId}
+         * @allow (get) if the user is the owner.
+         * @deny (delete) if the document does not exist.
+         * @principle Ensuring users can only access videos they commissioned.
+         */
+        match /editedVideos/{editedVideoId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && isValidUserLink(userId) && isValidConversationLink(conversationId);
+          allow update: if isExistingOwner(userId) && isValidUserLink(userId) && isValidConversationLink(conversationId);
           allow delete: if isExistingOwner(userId);
         }
       }
 
       /**
-       * @description Video Project rules. Manages Submagic processing state.
-       * @path /users/{userId}/videoProjects/{videoProjectId}
-       * @allow (get) User 'abc' checks the status of their video project.
-       * @deny (delete) User 'abc' tries to delete a video project owned by 'xyz'.
-       * @principle Relational Integrity: Ensures immutable ownership links.
+       * @description Rules for CreditTransactions. Financial history for the user.
+       * @path /users/{userId}/creditTransactions/{transactionId}
+       * @allow (get) for personal accounting.
+       * @deny (update) as transactions are typically immutable audit logs.
+       * @principle Secure, private record-keeping of credit balance changes.
        */
-      match /videoProjects/{videoProjectId} {
+      match /creditTransactions/{transactionId} {
         allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && isImmutable('userId');
+        allow create: if isOwner(userId) && isValidUserLink(userId);
+        allow update: if false; // Transactions should be immutable for integrity.
         allow delete: if isExistingOwner(userId);
       }
     }
 
     /**
-     * @description Video Template rules. Global templates are read-only for users.
-     * @path /videoTemplates/{templateId}
-     * @allow (list) Any signed-in user views available templates.
-     * @deny (create) Any user attempts to add a new global template.
-     * @principle Shared Read-Only: Managed by administrators, consumed by users.
+     * @description Rules for Global Video Templates.
+     * @path /templates/{templateId}
+     * @allow (read) for all authenticated users to browse options.
+     * @deny (write) for all users; templates are managed by system/admin.
+     * @principle Public-read (authenticated) with restricted administrative writes.
      */
-    match /videoTemplates/{templateId} {
+    match /templates/{templateId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if false; // Managed by Admin/Cloud Functions only
+      allow create, update, delete: if false; // System/Admin managed only.
     }
   }
 }
