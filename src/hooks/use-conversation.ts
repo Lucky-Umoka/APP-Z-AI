@@ -12,9 +12,6 @@ import { useRouter } from 'next/navigation';
 let messageIdCounter = 0;
 const getUniqueId = () => `msg_${Date.now()}_${messageIdCounter++}`;
 
-const PROCESSING_STEP_DURATION = 1500;
-const TOTAL_PROCESSING_STEPS = 8;
-
 export function useConversation() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -72,7 +69,7 @@ export function useConversation() {
       await simulateThinking();
       
       if (!user || user.isAnonymous) {
-        addMessage({ role: 'assistant', content: 'You need to be logged in with Google to start the editing process. Please sign in to continue.', type: 'error' });
+        router.push('/login');
         setIsLoading(false);
         return;
       }
@@ -82,7 +79,6 @@ export function useConversation() {
       try {
         const { firestore } = initializeFirebase();
         
-        // 1. Upload video to Storage
         const videoFile = editingDetails.videoFile;
         if (!videoFile) throw new Error('No video file selected.');
         
@@ -90,7 +86,6 @@ export function useConversation() {
         const storagePath = `users/${user.uid}/videos/${timestamp}_${videoFile.name}`;
         const publicUrl = await uploadVideoFile(videoFile, storagePath);
 
-        // 2. Create Job in Firestore
         const conversationId = 'conv_' + timestamp;
         const jobId = 'job_' + timestamp;
         
@@ -108,7 +103,6 @@ export function useConversation() {
           createdAt: serverTimestamp(),
         });
 
-        // 3. Show processing state in UI
         const initialState: ProcessingState = {
           videoUrl: publicUrl,
           progress: 0,
@@ -116,7 +110,6 @@ export function useConversation() {
         };
         const processingMessageId = addMessage({ role: 'assistant', content: '', type: 'processing', processingState: initialState });
 
-        // 4. Listen to the Firestore job document for updates
         const unsubscribe = onSnapshot(jobRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
@@ -145,7 +138,6 @@ export function useConversation() {
           }
         });
 
-        // 5. Trigger the Backend Genkit Flow
         runSubmagicEdit({
           userId: user.uid,
           conversationId: conversationId,
@@ -169,26 +161,21 @@ export function useConversation() {
       setEditingDetails(prev => ({...prev, summaryPlan: null}));
       setIsLoading(false);
     }
-  }, [addMessage, confirmationTimer, editingDetails, user]);
+  }, [addMessage, confirmationTimer, editingDetails, user, router]);
 
   const sendMessage = useCallback(async (message: string, files?: File[]) => {
+    // Auth Guard: Redirect immediately if not logged in
+    if (!user || user.isAnonymous) {
+      router.push('/login');
+      return;
+    }
+
     setIsLoading(true);
 
     if (message.trim() || (files && files.length > 0)) {
         addMessage({ role: 'user', content: message.trim(), attachments: files });
     }
 
-    // Auth check: User must be signed in (not anonymous) to continue
-    if (!user || user.isAnonymous) {
-      await simulateThinking(500);
-      addMessage({ 
-        role: 'assistant', 
-        content: 'I\'d love to help you with that! Please log in with your Google account so I can save your progress and start editing your videos.' 
-      });
-      setIsLoading(false);
-      return;
-    }
-    
     await simulateThinking();
     const file = files?.[0];
 
@@ -269,9 +256,15 @@ export function useConversation() {
             break;
     }
     setIsLoading(false);
-  }, [conversationStep, addMessage, editingDetails, handleConfirmation, user]);
+  }, [conversationStep, addMessage, editingDetails, handleConfirmation, user, router]);
 
   const handleTemplateSelection = useCallback(async (template: string) => {
+    // Auth Guard: Redirect immediately if not logged in
+    if (!user || user.isAnonymous) {
+      router.push('/login');
+      return;
+    }
+
     setIsLoading(true);
     addMessage({ role: 'user', content: `Selected template: ${template}` });
     setEditingDetails(prev => ({ ...prev, template }));
@@ -285,7 +278,7 @@ export function useConversation() {
       setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
     }
     setIsLoading(false);
-  }, [addMessage]);
+  }, [addMessage, user, router]);
 
   return {
     messages,

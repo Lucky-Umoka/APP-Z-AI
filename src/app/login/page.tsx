@@ -73,7 +73,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col gap-4 text-center">
           <div className="text-sm text-muted-foreground">
-            By continuing, you agree to our Terms of Service and Privacy Policy.
+            Don't have an account? <Link href="/signup" className="text-primary hover:underline">Sign up</Link>
           </div>
         </CardFooter>
       </Card>
