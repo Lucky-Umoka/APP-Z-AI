@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * ZUCKKY AI SECURITY RULES (PROTOTYPING MODE)
+     *
+     * Core Philosophy:
+     * This ruleset implements a strict user-ownership model. All user-generated content 
+     * (profiles, chat sessions, messages, and video projects) is nested within a 
+     * user-specific path /users/{userId}. Access is granted only if the authenticated 
+     * user's UID matches the {userId} in the path.
+     *
+     * Data Structure:
+     * - /users/{userId}: Root profile for the user.
+     * - /users/{userId}/chatSessions/{sessionId}: Conversations managed by the user.
+     * - /users/{userId}/chatSessions/{sessionId}/messages/{msgId}: Individual message logs.
+     * - /users/{userId}/videoProjects/{projectId}: Metadata for Submagic video edits.
+     * - /videoTemplates/{templateId}: Global, read-only template library.
+     *
+     * Key Security Decisions:
+     * 1. Path-Based Authorization: The primary security barrier is the {userId} wildcard.
+     * 2. Denormalization for Authorization: Critical fields like 'userId' are required 
+     *    inside documents to ensure relational integrity and permit efficient rules 
+     *    without using get() calls.
+     * 3. Read-Only Global Data: Video templates are accessible to all signed-in users 
+     *    but cannot be modified via the client.
+     * 4. State Safety: Update and delete operations strictly verify the document's 
+     *    existence and ownership before proceeding.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /**
+     * @description Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user's UID matches the provided ID.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Verifies ownership and ensures the document exists for mutation.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Ensures a field is not changed during an update.
+     */
+    function isImmutable(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description User Profile rules. Users can manage their own profile.
+     * @path /users/{userId}
+     * @allow (create) User 'abc' creates document /users/abc.
+     * @deny (get) User 'abc' attempts to read /users/xyz.
+     * @principle Ownership: Restricts access to a user's own data tree.
+     */
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update, delete: if isExistingOwner(userId);
+
+      /**
+       * @description Chat Session rules. Sessions are private to the owner.
+       * @path /users/{userId}/chatSessions/{chatSessionId}
+       * @allow (create) User 'abc' starts a chat with userId 'abc' in data.
+       * @deny (create) User 'abc' attempts to create session with userId 'xyz'.
+       * @principle Relational Integrity: Enforces that the internal userId matches the path.
+       */
+      match /chatSessions/{chatSessionId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && isImmutable('userId');
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Message rules. Stores the conversation history.
+         * @path /users/{userId}/chatSessions/{chatSessionId}/messages/{messageId}
+         * @allow (list) User 'abc' retrieves messages from their own session.
+         * @deny (update) User 'abc' tries to edit a message they don't own.
+         * @principle Authorization Independence: Uses parent path wildcard for fast checks.
+         */
+        match /messages/{messageId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && request.resource.data.chatSessionId == chatSessionId;
+          allow update: if isExistingOwner(userId);
+          allow delete: if isExistingOwner(userId);
+        }
+      }
+
+      /**
+       * @description Video Project rules. Manages Submagic processing state.
+       * @path /users/{userId}/videoProjects/{videoProjectId}
+       * @allow (get) User 'abc' checks the status of their video project.
+       * @deny (delete) User 'abc' tries to delete a video project owned by 'xyz'.
+       * @principle Relational Integrity: Ensures immutable ownership links.
+       */
+      match /videoProjects/{videoProjectId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && isImmutable('userId');
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description Video Template rules. Global templates are read-only for users.
+     * @path /videoTemplates/{templateId}
+     * @allow (list) Any signed-in user views available templates.
+     * @deny (create) Any user attempts to add a new global template.
+     * @principle Shared Read-Only: Managed by administrators, consumed by users.
+     */
+    match /videoTemplates/{templateId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false; // Managed by Admin/Cloud Functions only
+    }
+  }
+}
