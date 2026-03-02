@@ -17,7 +17,7 @@ export default function SignupPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect if already logged in (and not anonymous)
+  // Redirect if already logged in
   useEffect(() => {
     if (!isUserLoading && user && !user.isAnonymous) {
       router.replace('/');
@@ -29,12 +29,12 @@ export default function SignupPage() {
     setIsSubmitting(true);
     try {
       await initiateGoogleSignIn(auth);
-      // Redirection handled by useEffect above
+      // Redirection handled by useEffect above once state updates
     } catch (error: any) {
       console.error("Google Sign-Up failed:", error);
       setIsSubmitting(false);
       
-      if (error.code !== 'auth/popup-closed-by-user') {
+      if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
         toast({
           variant: "destructive",
           title: "Sign-up failed",
