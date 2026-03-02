@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -9,27 +8,39 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Logo from '@/components/zuckky/Logo';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SignupPage() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already logged in (and not anonymous)
   useEffect(() => {
     if (!isUserLoading && user && !user.isAnonymous) {
-      router.push('/');
+      router.replace('/');
     }
   }, [user, isUserLoading, router]);
 
   const handleGoogleSignUp = async () => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       await initiateGoogleSignIn(auth);
-    } catch (error) {
+      // Redirection handled by useEffect above
+    } catch (error: any) {
       console.error("Google Sign-Up failed:", error);
       setIsSubmitting(false);
+      
+      if (error.code !== 'auth/popup-closed-by-user') {
+        toast({
+          variant: "destructive",
+          title: "Sign-up failed",
+          description: error.message || "An unexpected error occurred during Google Sign-Up."
+        });
+      }
     }
   };
 
@@ -81,7 +92,7 @@ export default function SignupPage() {
                 />
               </svg>
             )}
-            Sign up with Google
+            {isSubmitting ? 'Signing up...' : 'Sign up with Google'}
           </Button>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 text-center">

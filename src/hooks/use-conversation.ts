@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
@@ -151,6 +150,9 @@ export function useConversation() {
   }, [addMessage, confirmationTimer, editingDetails, user, router]);
 
   const sendMessage = useCallback(async (message: string, files?: File[]) => {
+    // Wait for initial auth state determination
+    if (isUserLoading) return;
+
     // Auth Guard: Redirect immediately if not logged in
     if (!user || user.isAnonymous) {
       router.push('/login');
@@ -245,7 +247,7 @@ export function useConversation() {
             break;
     }
     setIsLoading(false);
-  }, [conversationStep, addMessage, editingDetails, handleConfirmation, user, router]);
+  }, [conversationStep, addMessage, editingDetails, handleConfirmation, user, isUserLoading, router]);
 
   const handleTemplateSelection = useCallback(async (template: string) => {
     // Auth Guard

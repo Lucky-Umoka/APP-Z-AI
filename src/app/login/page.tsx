@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -9,27 +8,41 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Logo from '@/components/zuckky/Logo';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already logged in (and not anonymous)
   useEffect(() => {
     if (!isUserLoading && user && !user.isAnonymous) {
-      router.push('/');
+      router.replace('/');
     }
   }, [user, isUserLoading, router]);
 
   const handleGoogleSignIn = async () => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       await initiateGoogleSignIn(auth);
-    } catch (error) {
+      // The onAuthStateChanged listener in FirebaseProvider will handle state update.
+      // useEffect above will handle redirection once the user object is available.
+    } catch (error: any) {
       console.error("Google Sign-In failed:", error);
       setIsSubmitting(false);
+      
+      // Don't show toast for cancelled popups
+      if (error.code !== 'auth/popup-closed-by-user') {
+        toast({
+          variant: "destructive",
+          title: "Sign-in failed",
+          description: error.message || "An unexpected error occurred during Google Sign-In."
+        });
+      }
     }
   };
 
@@ -81,7 +94,7 @@ export default function LoginPage() {
                 />
               </svg>
             )}
-            Continue with Google
+            {isSubmitting ? 'Signing in...' : 'Continue with Google'}
           </Button>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 text-center">
