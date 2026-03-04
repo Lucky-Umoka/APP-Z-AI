@@ -17,7 +17,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect if already logged in
+  // Robust redirection logic
   useEffect(() => {
     if (!isUserLoading && user && !user.isAnonymous) {
       router.replace('/');
@@ -29,12 +29,11 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       await initiateGoogleSignIn(auth);
-      // Success will be caught by the useEffect above through the useUser hook
+      // After sign-in, the useUser hook will update, triggering the useEffect above
     } catch (error: any) {
       console.error("Google Sign-In failed:", error);
       setIsSubmitting(false);
       
-      // Don't show toast for cancelled popups or internal redirects
       if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
         toast({
           variant: "destructive",
@@ -45,7 +44,8 @@ export default function LoginPage() {
     }
   };
 
-  if (isUserLoading) {
+  // Show a clean loading state if we're still checking auth or redirecting
+  if (isUserLoading || (user && !user.isAnonymous)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
