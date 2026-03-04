@@ -3,7 +3,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, getRedirectResult } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, getRedirectResult, signInAnonymously } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
@@ -66,29 +66,36 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     let isMounted = true;
 
-    // We process both the redirect result and the auth state change listener.
-    // onAuthStateChanged is the primary driver for session persistence.
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser) => {
         if (!isMounted) return;
 
-        // If we don't have a user yet, we also check if we just came back from a redirect sign-in.
         if (!firebaseUser) {
           try {
+            // Check for redirect result first
             const redirectResult = await getRedirectResult(auth);
             if (isMounted && redirectResult?.user) {
               setUserAuthState({ user: redirectResult.user, isUserLoading: false, userError: null });
               return;
             }
+            
+            // If no user and no redirect result, sign in anonymously for guest access
+            const anonUser = await signInAnonymously(auth);
+            if (isMounted) {
+              setUserAuthState({ user: anonUser.user, isUserLoading: false, userError: null });
+            }
           } catch (error: any) {
-            console.error("FirebaseProvider: getRedirectResult error:", error);
+            console.error("FirebaseProvider: Auth resolution error:", error);
+            if (isMounted) {
+              setUserAuthState({ user: null, isUserLoading: false, userError: error });
+            }
           }
-        }
-
-        // Standard auth state update
-        if (isMounted) {
-          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+        } else {
+          // Standard auth state update (Google or Anonymous)
+          if (isMounted) {
+            setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+          }
         }
       },
       (error) => {

@@ -53,9 +53,9 @@ export function useConversation() {
       addMessage({ role: 'user', content: 'Yes, proceed.' });
       await simulateThinking();
       
-      // Strict Auth Check
-      if (!user || user.isAnonymous) {
-        router.push('/login');
+      // Ensure we have a user (Anonymous or Google)
+      if (!user) {
+        console.error('No user found during confirmation');
         setIsLoading(false);
         return;
       }
@@ -147,15 +147,15 @@ export function useConversation() {
       setEditingDetails(prev => ({...prev, summaryPlan: null}));
       setIsLoading(false);
     }
-  }, [addMessage, confirmationTimer, editingDetails, user, router]);
+  }, [addMessage, confirmationTimer, editingDetails, user]);
 
   const sendMessage = useCallback(async (message: string, files?: File[]) => {
     // Wait for initial auth state determination
     if (isUserLoading) return;
 
-    // Auth Guard: Redirect immediately if not logged in
-    if (!user || user.isAnonymous) {
-      router.push('/login');
+    // We now allow anonymous users (Guest access)
+    if (!user) {
+      console.warn('No user session available yet.');
       return;
     }
 
@@ -236,7 +236,6 @@ export function useConversation() {
         
         case ConversationStep.DONE:
             if (message.toLowerCase().includes("new video")) {
-                // reset logic
                 setConversationStep(ConversationStep.AWAITING_VIDEO);
                 addMessage({ role: 'assistant', content: 'Ready for a new project! Please upload your footage.' });
             }
@@ -247,14 +246,10 @@ export function useConversation() {
             break;
     }
     setIsLoading(false);
-  }, [conversationStep, addMessage, editingDetails, handleConfirmation, user, isUserLoading, router]);
+  }, [conversationStep, addMessage, editingDetails, handleConfirmation, user, isUserLoading]);
 
   const handleTemplateSelection = useCallback(async (template: string) => {
-    // Auth Guard
-    if (!user || user.isAnonymous) {
-      router.push('/login');
-      return;
-    }
+    if (!user) return;
 
     setIsLoading(true);
     addMessage({ role: 'user', content: `Selected template: ${template}` });
@@ -269,7 +264,7 @@ export function useConversation() {
       setConversationStep(ConversationStep.AWAITING_INSTRUCTIONS);
     }
     setIsLoading(false);
-  }, [addMessage, user, router]);
+  }, [addMessage, user]);
 
   return {
     messages,
