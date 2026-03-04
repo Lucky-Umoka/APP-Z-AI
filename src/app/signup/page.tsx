@@ -17,7 +17,7 @@ export default function SignupPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect to dashboard as soon as a valid Google user is detected
   useEffect(() => {
     if (!isUserLoading && user && !user.isAnonymous) {
       router.replace('/');
@@ -29,7 +29,7 @@ export default function SignupPage() {
     setIsSubmitting(true);
     try {
       await initiateGoogleSignIn(auth);
-      // Redirection handled by useEffect above once state updates
+      // Redirection logic in useEffect will trigger once auth state confirms user
     } catch (error: any) {
       console.error("Google Sign-Up failed:", error);
       setIsSubmitting(false);
@@ -44,7 +44,7 @@ export default function SignupPage() {
     }
   };
 
-  if (isUserLoading) {
+  if (isUserLoading || (user && !user.isAnonymous)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

@@ -17,7 +17,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Robust redirection logic
+  // Unified redirection logic: once a user is authenticated, move them home.
   useEffect(() => {
     if (!isUserLoading && user && !user.isAnonymous) {
       router.replace('/');
@@ -29,7 +29,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       await initiateGoogleSignIn(auth);
-      // After sign-in, the useUser hook will update, triggering the useEffect above
+      // The useEffect will handle the redirection once the user state updates
     } catch (error: any) {
       console.error("Google Sign-In failed:", error);
       setIsSubmitting(false);
@@ -44,7 +44,7 @@ export default function LoginPage() {
     }
   };
 
-  // Show a clean loading state if we're still checking auth or redirecting
+  // Prevent showing the login form if we're loading or already have a user
   if (isUserLoading || (user && !user.isAnonymous)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">

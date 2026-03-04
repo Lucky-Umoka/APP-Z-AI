@@ -4,7 +4,7 @@ import React, { DependencyList, createContext, useContext, ReactNode, useMemo, u
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged, getRedirectResult } from 'firebase/auth';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -66,7 +66,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     let isMounted = true;
 
-    // First, check for redirect results (crucial for Google Auth)
+    // 1. Handle potential redirect results (crucial for some mobile/browser environments)
     getRedirectResult(auth)
       .then((result) => {
         if (isMounted && result?.user) {
@@ -76,11 +76,10 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       .catch((error) => {
         if (isMounted) {
           console.error("FirebaseProvider: getRedirectResult error:", error);
-          // Don't set loading to false yet, let onAuthStateChanged handle the final state
         }
       });
 
-    // Simultaneously listen for auth state changes
+    // 2. Listen for auth state changes (the primary source of truth)
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => {
