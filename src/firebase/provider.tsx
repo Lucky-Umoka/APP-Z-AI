@@ -66,23 +66,27 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     let isMounted = true;
 
-    // 1. Handle potential redirect results (crucial for some mobile/browser environments)
-    getRedirectResult(auth)
-      .then((result) => {
-        if (isMounted && result?.user) {
-          setUserAuthState({ user: result.user, isUserLoading: false, userError: null });
-        }
-      })
-      .catch((error) => {
-        if (isMounted) {
-          console.error("FirebaseProvider: getRedirectResult error:", error);
-        }
-      });
-
-    // 2. Listen for auth state changes (the primary source of truth)
+    // We process both the redirect result and the auth state change listener.
+    // onAuthStateChanged is the primary driver for session persistence.
     const unsubscribe = onAuthStateChanged(
       auth,
-      (firebaseUser) => {
+      async (firebaseUser) => {
+        if (!isMounted) return;
+
+        // If we don't have a user yet, we also check if we just came back from a redirect sign-in.
+        if (!firebaseUser) {
+          try {
+            const redirectResult = await getRedirectResult(auth);
+            if (isMounted && redirectResult?.user) {
+              setUserAuthState({ user: redirectResult.user, isUserLoading: false, userError: null });
+              return;
+            }
+          } catch (error: any) {
+            console.error("FirebaseProvider: getRedirectResult error:", error);
+          }
+        }
+
+        // Standard auth state update
         if (isMounted) {
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         }

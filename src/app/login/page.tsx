@@ -29,7 +29,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       await initiateGoogleSignIn(auth);
-      // The useEffect will handle the redirection once the user state updates
+      // The auth provider will handle the state update and the useEffect will trigger redirection
     } catch (error: any) {
       console.error("Google Sign-In failed:", error);
       setIsSubmitting(false);
@@ -48,14 +48,18 @@ export default function LoginPage() {
   if (isUserLoading || (user && !user.isAnonymous)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <Logo className="h-16 w-16 animate-pulse" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Synchronizing session...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-black px-4 py-12">
-      <Card className="w-full max-w-md border-border bg-card">
+      <Card className="w-full max-w-md border-border bg-card shadow-2xl">
         <CardHeader className="space-y-1 flex flex-col items-center text-center">
           <div className="mb-4">
             <Logo className="h-16 w-16" />
@@ -68,7 +72,7 @@ export default function LoginPage() {
         <CardContent className="flex flex-col gap-4">
           <Button 
             onClick={handleGoogleSignIn}
-            className="w-full bg-white text-black hover:bg-gray-100 font-semibold py-6"
+            className="w-full bg-white text-black hover:bg-gray-100 font-semibold py-6 transition-all"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -98,7 +102,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col gap-4 text-center">
           <div className="text-sm text-muted-foreground">
-            Don't have an account? <Link href="/signup" className="text-primary hover:underline">Sign up</Link>
+            Don't have an account? <Link href="/signup" className="text-primary hover:underline font-medium">Sign up</Link>
           </div>
         </CardFooter>
       </Card>
